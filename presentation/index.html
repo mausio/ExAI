@@ -1,40 +1,157 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<head>
 
-		<title>reveal.js</title>
+    <meta charset="utf-8">
+    <title>ExAI Projektpräsentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.4.0/reveal.min.css">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.4.0/theme/black.min.css">
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
 
-		<link rel="stylesheet" href="dist/reset.css">
-		<link rel="stylesheet" href="dist/reveal.css">
-		<link rel="stylesheet" href="dist/theme/black.css">
+        <section>
+            <h1>ExAI Projekt</h1>
+            <h3>Explainable AI mit Bilddaten</h3>
+            <p>Lukas, Janik, Robin, Felix</p>
+        </section>
 
-		<!-- Theme used for syntax highlighted code -->
-		<link rel="stylesheet" href="plugin/highlight/monokai.css">
-	</head>
-	<body>
-		<div class="reveal">
-			<div class="slides">
-				<section>Slide 1</section>
-				<section>Slide 2</section>
-			</div>
-		</div>
+        <section>
+            <h2>Problemstellung</h2>
+            <p>Unterscheidung von <strong>Pembroke</strong> und <strong>Cardigan
+                Corgis</strong> mit Hilfe eines CNN.</p>
+            <p>Ziel: Erklärbare Entscheidungen durch XAI-Methoden</p>
+        </section>
 
-		<script src="dist/reveal.js"></script>
-		<script src="plugin/notes/notes.js"></script>
-		<script src="plugin/markdown/markdown.js"></script>
-		<script src="plugin/highlight/highlight.js"></script>
-		<script>
-			// More info about initialization & config:
-			// - https://revealjs.com/initialization/
-			// - https://revealjs.com/config/
-			Reveal.initialize({
-				hash: true,
+        <section>
+            <h2>Datensatz</h2>
+            <ul>
+                <li><strong>Stanford Dogs Dataset</strong></li>
+                <li>120 Hunderassen, über 20.000 Bilder</li>
+                <li>Verwendung der Klassen: Pembroke & Cardigan Welsh Corgi</li>
+                <li><a href="http://vision.stanford.edu/aditya86/ImageNetDogs/">Link
+                    zum Datensatz</a></li>
+            </ul>
+        </section>
 
-				// Learn about plugins: https://revealjs.com/plugins/
-				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
-			});
-		</script>
-	</body>
+        <section>
+            <h2>Modell</h2>
+            <ul>
+                <li>Convolutional Neural Network (CNN)</li>
+                <li>Eigene Architektur auf Basis von Transfer Learning (z.B.
+                    ResNet50)
+                </li>
+                <li>Trainiert auf Bounding Boxes der Zielklassen</li>
+                <li>Train / Test Split gemäß Dataset-Vorgaben</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Modelltraining</h2>
+            <ul>
+                <li>Bildnormalisierung & Resize</li>
+                <li>Loss Function: Categorical Cross-Entropy</li>
+                <li>Optimizer: Adam</li>
+                <li>Evaluation: Accuracy, Precision, Recall</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>XAI-Verfahren</h2>
+            <ol>
+                <li><strong>Contrastive Grad-CAM</strong>: Visualisierung
+                    relevanter Bildbereiche
+                </li>
+                <li><strong>Layerwise Relevance Propagation (LRP)</strong>:
+                    Schichtweise Zuweisung von Wichtigkeit
+                </li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>Grad-CAM: Beispiel</h2>
+            <img src="images/gradcam_example.png" alt="Grad-CAM"
+                 style="width:70%">
+            <p>Hervorgehobene Regionen für Entscheidung "Pembroke"</p>
+        </section>
+
+        <section>
+            <h2>LRP: Beispiel</h2>
+            <img src="images/lrp_example.png" alt="LRP" style="width:70%">
+            <p>Beiträge einzelner Pixel zur Entscheidung</p>
+        </section>
+
+        <section>
+            <h2>Vergleich XAI-Methoden</h2>
+            <table>
+                <thead>
+                <tr>
+                    <th>Kriterium</th>
+                    <th>Grad-CAM</th>
+                    <th>LRP</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Interpretierbarkeit</td>
+                    <td>hoch</td>
+                    <td>mittel</td>
+                </tr>
+                <tr>
+                    <td>Modellabhängigkeit</td>
+                    <td>CNN-spezifisch</td>
+                    <td>modellabhängig</td>
+                </tr>
+                <tr>
+                    <td>Rechenaufwand</td>
+                    <td>gering</td>
+                    <td>mittel</td>
+                </tr>
+                <tr>
+                    <td>Stabilität</td>
+                    <td>mittel</td>
+                    <td>hoch</td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>Diskussion & Ausblick</h2>
+            <ul>
+                <li>Beide Verfahren liefern plausible Erklärungen</li>
+                <li>Kombination für robuste Interpretationen sinnvoll</li>
+                <li>Ausblick: Integration weiterer Methoden wie SHAP oder XRAI
+                </li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Vielen Dank!</h2>
+            <p>Fragen?</p>
+        </section>
+
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.4.0/reveal.min.js"></script>
+<script src="dist/reveal.js"></script>
+<script src="plugin/notes/notes.js"></script>
+<script src="plugin/markdown/markdown.js"></script>
+<script src="plugin/highlight/highlight.js"></script>
+<script>
+    // More info about initialization & config:
+    // - https://revealjs.com/initialization/
+    // - https://revealjs.com/config/
+    Reveal.initialize({
+        hash: true,
+
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [RevealMarkdown, RevealHighlight, RevealNotes]
+    });
+</script>
+</body>
 </html>
