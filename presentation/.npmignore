@@ -1,0 +1,5 @@
+/presentation/test
+/presentation/examples
+.github
+.sass-cache
+gulpfile.js
