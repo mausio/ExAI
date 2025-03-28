@@ -22,8 +22,7 @@
 
         <section>
             <h2>Problemstellung</h2>
-            <p>Unterscheidung von <strong>Pembroke</strong> und <strong>Cardigan
-                Corgis</strong> mit Hilfe eines CNN.</p>
+            <p>Unterscheidung von <strong>Pembroke</strong> und <strong>Cardigan Corgis</strong> mit Hilfe eines CNN.</p>
             <p>Ziel: Erklärbare Entscheidungen durch XAI-Methoden</p>
         </section>
 
@@ -33,106 +32,106 @@
                 <li><strong>Stanford Dogs Dataset</strong></li>
                 <li>120 Hunderassen, über 20.000 Bilder</li>
                 <li>Verwendung der Klassen: Pembroke & Cardigan Welsh Corgi</li>
-                <li><a href="http://vision.stanford.edu/aditya86/ImageNetDogs/">Link
-                    zum Datensatz</a></li>
+                <li>Zusatzkategorie: "Mischling" durch Softmax-Unsicherheit</li>
+                <li><a href="http://vision.stanford.edu/aditya86/ImageNetDogs/">Link zum Datensatz</a></li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Datenvorverarbeitung</h2>
+            <ul>
+                <li>Bounding Boxes aus Annotations extrahiert (MAT-Dateien)</li>
+                <li>Train/Test/Val-Split aus .mat-Files geladen</li>
+                <li>Resize auf 224x224px</li>
+                <li>Normalisierung auf Imagenet-Mittelwerte</li>
             </ul>
         </section>
 
         <section>
             <h2>Modell</h2>
             <ul>
-                <li>Convolutional Neural Network (CNN)</li>
-                <li>Eigene Architektur auf Basis von Transfer Learning (z.B.
-                    ResNet50)
-                </li>
-                <li>Trainiert auf Bounding Boxes der Zielklassen</li>
-                <li>Train / Test Split gemäß Dataset-Vorgaben</li>
+                <li>Transfer Learning mit ResNet50</li>
+                <li>Pretrained auf ImageNet, Fine-Tuning auf Corgis</li>
+                <li>Nur letzte Layer ersetzt: Dense Layer für 2-Klassen Klassifikation</li>
             </ul>
         </section>
 
         <section>
             <h2>Modelltraining</h2>
             <ul>
-                <li>Bildnormalisierung & Resize</li>
-                <li>Loss Function: Categorical Cross-Entropy</li>
-                <li>Optimizer: Adam</li>
-                <li>Evaluation: Accuracy, Precision, Recall</li>
+                <li>Loss: Categorical Cross-Entropy</li>
+                <li>Optimizer: Adam, LR: 0.0001</li>
+                <li>Batchsize: 32, Epochs: 20</li>
+                <li>Val Accuracy: 91.3%</li>
+                <li>Frühzeitiges Stoppen bei Overfitting</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Erkennung von Mischlingen</h2>
+            <ul>
+                <li>Zusätzliche Logik: Wenn Softmax-Ausgabe < 0.6 bei beiden Klassen → Label: "Mischling"</li>
+                <li>Beispielbilder zeigen überlappende Merkmale von beiden Corgi-Typen</li>
+                <li>Modell "unsicher" → Indiz für fehlende Klarheit der Merkmale</li>
             </ul>
         </section>
 
         <section>
             <h2>XAI-Verfahren</h2>
             <ol>
-                <li><strong>Contrastive Grad-CAM</strong>: Visualisierung
-                    relevanter Bildbereiche
-                </li>
-                <li><strong>Layerwise Relevance Propagation (LRP)</strong>:
-                    Schichtweise Zuweisung von Wichtigkeit
-                </li>
+                <li><strong>Contrastive Grad-CAM</strong>: Visualisiert Unterschiede zwischen Klassen</li>
+                <li><strong>Layerwise Relevance Propagation (LRP)</strong>: Liefert tiefere Einsicht auf Pixelebene</li>
             </ol>
         </section>
 
         <section>
-            <h2>Grad-CAM: Beispiel</h2>
-            <img src="images/gradcam_example.png" alt="Grad-CAM"
-                 style="width:70%">
+            <h2>Code-Snippet: Grad-CAM</h2>
+            <pre><code class="language-python"># Grad-CAM Beispielcode
+cam = GradCAM(model, target_layer="layer4")
+heatmap = cam.generate(image_tensor)
+</code></pre>
+        </section>
+
+        <section>
+            <h2>Visualisierung: Grad-CAM</h2>
+            <img src="images/gradcam_example.png" alt="Grad-CAM" style="width:70%">
             <p>Hervorgehobene Regionen für Entscheidung "Pembroke"</p>
         </section>
 
         <section>
-            <h2>LRP: Beispiel</h2>
+            <h2>Visualisierung: LRP</h2>
             <img src="images/lrp_example.png" alt="LRP" style="width:70%">
-            <p>Beiträge einzelner Pixel zur Entscheidung</p>
+            <p>Pixel-Relevanzen zur finalen Entscheidung</p>
         </section>
 
         <section>
             <h2>Vergleich XAI-Methoden</h2>
             <table>
                 <thead>
-                <tr>
-                    <th>Kriterium</th>
-                    <th>Grad-CAM</th>
-                    <th>LRP</th>
-                </tr>
+                <tr><th>Kriterium</th><th>Grad-CAM</th><th>LRP</th></tr>
                 </thead>
                 <tbody>
-                <tr>
-                    <td>Interpretierbarkeit</td>
-                    <td>hoch</td>
-                    <td>mittel</td>
-                </tr>
-                <tr>
-                    <td>Modellabhängigkeit</td>
-                    <td>CNN-spezifisch</td>
-                    <td>modellabhängig</td>
-                </tr>
-                <tr>
-                    <td>Rechenaufwand</td>
-                    <td>gering</td>
-                    <td>mittel</td>
-                </tr>
-                <tr>
-                    <td>Stabilität</td>
-                    <td>mittel</td>
-                    <td>hoch</td>
-                </tr>
+                <tr><td>Interpretierbarkeit</td><td>hoch</td><td>hoch</td></tr>
+                <tr><td>Modellabhängigkeit</td><td>nur CNN</td><td>bedingt modellabhängig</td></tr>
+                <tr><td>Rechenaufwand</td><td>gering</td><td>hoch</td></tr>
+                <tr><td>Auflösung</td><td>grob</td><td>fein</td></tr>
                 </tbody>
             </table>
         </section>
 
         <section>
-            <h2>Diskussion & Ausblick</h2>
+            <h2>Diskussion & Fazit</h2>
             <ul>
-                <li>Beide Verfahren liefern plausible Erklärungen</li>
-                <li>Kombination für robuste Interpretationen sinnvoll</li>
-                <li>Ausblick: Integration weiterer Methoden wie SHAP oder XRAI
-                </li>
+                <li>Modell liefert gute Ergebnisse für klar trennbare Klassen</li>
+                <li>XAI zeigt anschaulich, wo das Modell "hinschaut"</li>
+                <li>Mischlingskategorie sinnvoll durch Unsicherheitsanalyse</li>
+                <li>Zukunft: weitere Methoden (z.B. SHAP, Integrated Gradients)</li>
             </ul>
         </section>
 
         <section>
             <h2>Vielen Dank!</h2>
-            <p>Fragen?</p>
+            <p>Fragen? Diskussion?</p>
         </section>
 
     </div>
@@ -143,13 +142,8 @@
 <script src="plugin/markdown/markdown.js"></script>
 <script src="plugin/highlight/highlight.js"></script>
 <script>
-    // More info about initialization & config:
-    // - https://revealjs.com/initialization/
-    // - https://revealjs.com/config/
     Reveal.initialize({
         hash: true,
-
-        // Learn about plugins: https://revealjs.com/plugins/
         plugins: [RevealMarkdown, RevealHighlight, RevealNotes]
     });
 </script>
