@@ -55,7 +55,7 @@
             <p><small>DHBW - ExAI Projekt</small></p>
         </section>
 
-        <section class="title-slide">
+        <section>
             <h1>Agenda</h1>
             <ul>
                 <li> Zielsetzung </li>
@@ -97,7 +97,7 @@
         </section>
 
         <section>
-            <h2>Datenvorverarbeitung - TODO</h2>
+            <h2>Datenvorverarbeitung</h2>
             <ul>
                 <li>Train/Val-Split im Verhältnis 80%/20%</li>
                 <li>Bildtransformationen für Trainingsdaten:
@@ -142,22 +142,26 @@
         </section>
 
         <section>
-            <h2>Modell-Ergebnisse - TODO</h2>
+            <h2>Modell-Ergebnisse</h2>
             <ul>
                 <li>Accuracy: >90% auf Validierungsdaten</li>
                 <li>Transfer Learning mit Fine-Tuning der letzten Layer (layer4)</li>
                 <li>Früher Trainingsabbruch durch Early Stopping (patience=5)</li>
-                <li>Adaptive Lernrate mit ReduceLROnPlateau Scheduler</li>
-                <li>Beste Ergebnisse bei Bildern mit klaren rassetypischen Merkmalen</li>
             </ul>
-            <div>
-                <img src="images/ExAI-Loss-and-Accuracy.png" alt="Loss and Accuracy" style="width:60.5%"/>
-                <img src="images/ExAI-Confusion-Matrix.png" alt="Konfusionsmatrix" style="width:35%"/>
-            </div>
+            <img src="images/ExAI-Loss-and-Accuracy.png" alt="Loss and Accuracy" style="width:60%; display:block; margin: 0 auto;"/>
         </section>
 
         <section>
-            <h2>Erkennung von Mischlingen - TODO</h2>
+            <h2>Modell-Ergebnisse</h2>
+            <ul>
+                <li>Adaptive Lernrate mit ReduceLROnPlateau Scheduler</li>
+                <li>Beste Ergebnisse bei Bildern mit klaren rassetypischen Merkmalen</li>
+            </ul>
+            <img src="images/ExAI-Confusion-Matrix.png" alt="Konfusionsmatrix" style="width:40%; display:block; margin: 0 auto;"/>
+        </section>
+
+        <section>
+            <h2>Erkennung von Mischlingen</h2>
             <ul>
                 <li>Herausforderung: Mischlings-Corgis zeigen Merkmale beider Rassen</li>
                 <li>Bei Bildern mit gemischten Charakteristika:
@@ -167,6 +171,12 @@
                         <li>LRP identifiziert widersprüchliche Merkmale beider Rassen</li>
                     </ul>
                 </li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Erkennung von Mischlingen</h2>
+            <ul>
                 <li>XAI-Methoden ermöglichen Einblick in die "Unsicherheit" des Modells</li>
                 <img src="./images/niko-royalty-free-image-1726720063.png" alt="Beispielbild_Corgi" style="width:40%">
             </ul>
@@ -219,15 +229,23 @@ def generate(self, input_tensor, target_class=None):
         </section>
 
         <section>
-            <h2>Visualisierung: Grad-CA - TODO</h2>
+            <h2>Visualisierung: Grad-CAM</h2>
             <ul>
                 <li>Hervorhebung entscheidungsrelevanter Bildregionen</li>
                 <li>Bei Pembroke: Fokus auf Kopfform, Ohren und kurzen Schwanz</li>
                 <li>Bei Cardigan: Fokus auf größere Ohren und längeren Schwanz</li>
                 <li>Nutzung des letzten Convolutional Layers (layer4 von ResNet50)</li>
             </ul>
-            <img src="images/gradcam_example.png" alt="Grad-CAM" style="width:70%">
-            <p>Heatmap zeigt die für die Klassifikation relevanten Regionen</p>
+        </section>
+
+        <section>
+            <h2>Visualisierung: Grad-CAM</h2>
+            <div style="display: flex; align-items: center;">
+                <img src="images/GradCAM-Beispiele.png" alt="Grad-CAM-Visual" style="width: 20%; margin-right: 20px;" />
+                <p>
+                    Heatmap zeigt die für die Klassifikation relevanten Regionen
+                </p>
+              </div>
         </section>
 
         <section>
@@ -262,7 +280,7 @@ def _lrp_conv(self, layer, input_tensor, output_tensor, relevance):
         </section>
 
         <section>
-            <h2>Visualisierung: LRP - TODO </h2>
+            <h2>Visualisierung: LRP</h2>
             <ul>
                 <li>Feinkörnige Visualisierung der Pixelrelevanz durch alle Netzwerkschichten hinweg</li>
                 <li>Höhere Detailtiefe als GradCAM durch Berücksichtigung aller Layeraktivierungen</li>
@@ -274,26 +292,17 @@ def _lrp_conv(self, layer, input_tensor, output_tensor, relevance):
                 </li>
                 <li>Höherer Rechenaufwand, aber detailliertere Erklärung der Modellentscheidung</li>
             </ul>
-            <img src="images/lrp_example.png" alt="LRP" style="width:70%">
-            <p>Detaillierte Pixel-Relevanzverteilung zur finalen Entscheidung</p>
         </section>
 
         <section>
-            <h1>Notebook</h1>
-            <h4>Live-Demo</h4>
+            <h2>Visualisierung: LRP - TODO </h2>
+            <div style="display: flex; align-items: center;">
+                <img src="images/lrp_example.png" alt="LRP-Visual" style="width: 20%; margin-right: 20px;" />
+                <p>
+                    Detaillierte Pixel-Relevanzverteilung zur finalen Entscheidung
+                </p>
+              </div>
         </section>
-
-        <section>
-            <h1>Analyse & Kritische Diskussion</h1>
-        </section>
-
-<!--        <section>-->
-<!--            <h2>Vergleich der Methoden</h2>-->
-<!--            <img src="images/comparison.png" alt="Vergleich" style="width:80%">-->
-<!--            <p>Links: Original, Mitte: Grad-CAM, Rechts: LRP</p>-->
-<!--        </section>-->
-
-
 
         <section>
             <h2>Vergleich XAI-Methoden: Interpretierbarkeit</h2>
@@ -350,6 +359,25 @@ def _lrp_conv(self, layer, input_tensor, output_tensor, relevance):
                 </tbody>
             </table>
         </section>
+
+        <section>
+            <h1>Notebook</h1>
+            <h4>Live-Demo</h4>
+        </section>
+
+        <section>
+            <h1>Analyse & Kritische Diskussion</h1>
+        </section>
+
+<!--        <section>-->
+<!--            <h2>Vergleich der Methoden</h2>-->
+<!--            <img src="images/comparison.png" alt="Vergleich" style="width:80%">-->
+<!--            <p>Links: Original, Mitte: Grad-CAM, Rechts: LRP</p>-->
+<!--        </section>-->
+
+
+
+        
 
 <!--        <section>-->
 <!--            <h2>Contrastive Analysis</h2>-->
