@@ -55,9 +55,25 @@
             <p><small>DHBW - ExAI Projekt</small></p>
         </section>
 
+        <section class="title-slide">
+            <h1>Agenda</h1>
+            <ul>
+                <li> Zielsetzung </li>
+                <li> Datensatz-Auswahl & Preprocessing </li>
+                <li> Modelltraining </li>
+                <li> XAI Verfahren </li>
+                <li> Notebook </li>
+                <li> Analyse & Kritische Diskussion </li>
+            </ul>
+        </section>
+
+        <section>
+            <h1>Zielsetzung</h1>
+        </section>
+
         <section>
             <h2>Problemstellung</h2>
-            <p>Unterscheidung von <strong>Pembroke</strong> und <strong>Cardigan Corgis</strong> mit Hilfe eines CNN.</p>
+            <p>Unterscheidung der Corgi-Rassen <strong>Pembroke</strong> und <strong>Cardigan</strong> mit Hilfe eines CNN.</p>
         </section>
 
         <section>
@@ -66,7 +82,9 @@
             <p>Ziel: Erklärbare Entscheidungen durch XAI-Methoden</p>
         </section>
 
-
+        <section>
+            <h1>Datensatz-Auswahl & Preprocessing</h1>
+        </section>
 
         <section>
             <h2>Datensatz</h2>
@@ -79,7 +97,7 @@
         </section>
 
         <section>
-            <h2>Datenvorverarbeitung</h2>
+            <h2>Datenvorverarbeitung - TODO</h2>
             <ul>
                 <li>Train/Test/Val-Split</li>
                 <li>Resize auf 224x224px</li>
@@ -88,19 +106,27 @@
         </section>
 
         <section>
-            <h2>Modell</h2>
+            <h1>Modelltraining</h1>
+        </section>
+
+        <section>
+            <h2>Modellauswahl</h2>
             <ul>
-                <li>Transfer Learning mit ResNet50</li>
-                <li>Pretrained auf ImageNet, Fine-Tuning auf Corgis (Pembroke&Cardigan)</li>
+                <li>Verwendung eines Convolutional Neural Networks (CNN) für Bilddaten</li>
+                <li>Begründung: CNNs sind spezialisiert auf die Extraktion von Merkmalen aus Bildern</li>
+                <li>Transfer Learning mit ResNet50, vortrainiert auf ImageNet</li>
+                <li>Fine-Tuning auf Corgis (Pembroke&Cardigan)</li>
                 <li>Nur letzte Layer ersetzt: Dense Layer für 2-Klassen Klassifikation</li>
             </ul>
         </section>
 
         <section>
-            <h2>Modelltraining</h2>
+            <h2>Modellarchitektur & Training</h2>
             <ul>
-                <li>CrossEntropyLoss als Verlustfunktion</li>
-                <li>Adam Optimizer mit Learning Rate 0.001</li>
+                <li>Architektur: ResNet50 mit 50 Layern, Dense Layer für 2-Klassen Klassifikation</li>
+                <li>Hyperparameter: Learning Rate 0.001, Batch Size 32</li>
+                <li>Aktivierungsfunktionen: ReLU in den versteckten Schichten</li>
+                <li>Training: CrossEntropyLoss als Verlustfunktion, Adam Optimizer</li>
                 <li>Transfer Learning: Nur letzte Schichten trainiert</li>
                 <li>10 Epochen für Feinabstimmung</li>
                 <li>Aufteilung: 70% Training, 15% Validierung, 15% Test</li>
@@ -108,7 +134,7 @@
         </section>
 
         <section>
-            <h2>Modell-Ergebnisse</h2>
+            <h2>Modell-Ergebnisse - TODO</h2>
             <ul>
                 <li>Accuracy: ~92% auf Testdaten</li>
                 <li>Fehler hauptsächlich bei Bildern mit untypischen Merkmalen</li>
@@ -118,11 +144,16 @@
         </section>
 
         <section>
-            <h2>Erkennung von Mischlingen</h2>
+            <h2>Erkennung von Mischlingen - TODO</h2>
             <ul>
                 <li>Beispielbilder zeigen überlappende Merkmale von beiden Corgi-Typen</li>
                 <li>Modell "unsicher" → Indiz für fehlende Klarheit der Merkmale</li>
+                <img src="./images/niko-royalty-free-image-1726720063.png" alt="Beispielbild_Corgi" style="width:40%">
             </ul>
+        </section>
+
+        <section>
+            <h1>XAI Verfahren</h1>
         </section>
 
         <section>
@@ -145,7 +176,7 @@
         </section>
 
         <section>
-            <h2>Code-Snippet: Grad-CAM</h2>
+            <h2>Code-Snippet: Grad-CAM - TODO</h2>
             <pre><code class="language-python"># Grad-CAM Implementation
 def generate(self, input_tensor, target_class=None):
     # Forward pass
@@ -168,7 +199,7 @@ def generate(self, input_tensor, target_class=None):
         </section>
 
         <section>
-            <h2>Visualisierung: Grad-CAM</h2>
+            <h2>Visualisierung: Grad-CAM - TODO</h2>
             <img src="images/gradcam_example.png" alt="Grad-CAM" style="width:70%">
             <p>Hervorgehobene Regionen für Entscheidung "Pembroke"</p>
         </section>
@@ -184,7 +215,7 @@ def generate(self, input_tensor, target_class=None):
         </section>
 
         <section>
-            <h2>Code-Snippet: LRP</h2>
+            <h2>Code-Snippet: LRP - TODO</h2>
             <pre><code class="language-python"># LRP Implementation
 def _lrp_conv(self, layer, input_tensor, output_tensor, relevance):
     # Get weights and reshape
@@ -205,44 +236,96 @@ def _lrp_conv(self, layer, input_tensor, output_tensor, relevance):
         </section>
 
         <section>
-            <h2>Visualisierung: LRP</h2>
+            <h2>Visualisierung: LRP - TODO</h2>
             <img src="images/lrp_example.png" alt="LRP" style="width:70%">
             <p>Pixel-Relevanzen zur finalen Entscheidung</p>
         </section>
 
         <section>
-            <h2>Vergleich der Methoden</h2>
-            <img src="images/comparison.png" alt="Vergleich" style="width:80%">
-            <p>Links: Original, Mitte: Grad-CAM, Rechts: LRP</p>
+            <h1>Notebook</h1>
+            <h4>Live-Demo</h4>
         </section>
 
         <section>
-            <h2>Vergleich XAI-Methoden</h2>
+            <h1>Analyse & Kritische Diskussion</h1>
+        </section>
+
+<!--        <section>-->
+<!--            <h2>Vergleich der Methoden</h2>-->
+<!--            <img src="images/comparison.png" alt="Vergleich" style="width:80%">-->
+<!--            <p>Links: Original, Mitte: Grad-CAM, Rechts: LRP</p>-->
+<!--        </section>-->
+
+
+
+        <section>
+            <h2>Vergleich XAI-Methoden: Interpretierbarkeit</h2>
+            <ul>
+                <li><strong>Grad-CAM:</strong> Einfach zu verstehen, da visuelle Heatmaps erzeugt werden. Geeignet für Laien.</li>
+                <li><strong>LRP:</strong> Liefert detaillierte Erklärungen auf Pixelebene, aber erfordert Expertenwissen zur Interpretation.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Vergleich XAI-Methoden: Modellabhängigkeit</h2>
+            <ul>
+                <li><strong>Grad-CAM:</strong> Funktioniert nur mit CNNs, da es Gradienten der Convolutional Layer nutzt.</li>
+                <li><strong>LRP:</strong> Bedingt modellabhängig, kann auf verschiedene Architekturen angewendet werden, aber erfordert spezifische Anpassungen.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Vergleich XAI-Methoden: Genauigkeit & Konsistenz</h2>
+            <ul>
+                <li><strong>Grad-CAM:</strong> Liefert grobe Erklärungen, die für viele Inputs konsistent sind, aber weniger präzise.</li>
+                <li><strong>LRP:</strong> Sehr präzise auf Pixelebene, aber die Ergebnisse können bei kleinen Änderungen im Input variieren.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Vergleich XAI-Methoden: Berechnungskosten</h2>
+            <ul>
+                <li><strong>Grad-CAM:</strong> Geringer Rechenaufwand, geeignet für große Datensätze und Echtzeitanwendungen.</li>
+                <li><strong>LRP:</strong> Hoher Rechenaufwand, besonders bei tiefen Netzwerken und großen Datensätzen.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Vergleich XAI-Methoden: Anwendungsszenarien</h2>
+            <ul>
+                <li><strong>Grad-CAM:</strong> Ideal für schnelle visuelle Analysen, z. B. in der medizinischen Bildverarbeitung.</li>
+                <li><strong>LRP:</strong> Geeignet für detaillierte Analysen, z. B. in der Forschung oder bei sicherheitskritischen Anwendungen.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Vergleich XAI-Methoden: Gesamtüberblick</h2>
             <table>
                 <thead>
                 <tr><th>Kriterium</th><th>Grad-CAM</th><th>LRP</th></tr>
                 </thead>
                 <tbody>
                 <tr><td>Interpretierbarkeit</td><td>hoch</td><td>hoch</td></tr>
-                <tr><td>Modellabhängigkeit</td><td>nur CNN</td><td>bedingt modellabhängig</td></tr>
-                <tr><td>Rechenaufwand</td><td>gering</td><td>hoch</td></tr>
-                <tr><td>Auflösung</td><td>grob</td><td>fein</td></tr>
+                <tr><td>Modellabhängigkeit</td><td>nur CNN</td><td>flexibel</td></tr>
+                <tr><td>Genauigkeit</td><td>grob</td><td>fein</td></tr>
+                <tr><td>Berechnungskosten</td><td>gering</td><td>hoch</td></tr>
+                <tr><td>Anwendung</td><td>schnell</td><td>detailliert</td></tr>
                 </tbody>
             </table>
         </section>
 
-        <section>
-            <h2>Contrastive Analysis</h2>
-            <ul>
-                <li>Vergleich der relevanten Merkmale für beide Klassen</li>
-                <li>Hervorhebung der unterscheidenden Features</li>
-                <li>Besonders wichtig bei ähnlichen Klassen wie Pembroke/Cardigan</li>
-            </ul>
-            <img src="images/contrastive_example.png" alt="Contrastive Analysis" style="width:60%">
-        </section>
+<!--        <section>-->
+<!--            <h2>Contrastive Analysis</h2>-->
+<!--            <ul>-->
+<!--                <li>Vergleich der relevanten Merkmale für beide Klassen</li>-->
+<!--                <li>Hervorhebung der unterscheidenden Features</li>-->
+<!--                <li>Besonders wichtig bei ähnlichen Klassen wie Pembroke/Cardigan</li>-->
+<!--            </ul>-->
+<!--            <img src="images/contrastive_example.png" alt="Contrastive Analysis" style="width:60%">-->
+<!--        </section>-->
 
         <section>
-            <h2>Anwendungsfall: Mischling-Erkennung</h2>
+            <h2>Anwendungsfall: Mischling-Erkennung - TODO, Überfällig?</h2>
             <ul>
                 <li>Bei Mischlingen zeigen beide Methoden überlappende Merkmale</li>
                 <li>Unsicherheit des Modells korreliert mit Stärke der Merkmale</li>
@@ -257,7 +340,7 @@ def _lrp_conv(self, layer, input_tensor, output_tensor, relevance):
                 <li>XAI-Methoden verdeutlichen die Entscheidungskriterien des Modells</li>
                 <li>Grad-CAM: guter Überblick über relevante Regionen</li>
                 <li>LRP: detailliertere Analyse auf Pixelebene</li>
-                <li>Kombination beider Methoden liefert umfassendes Verständnis</li>
+<!--                <li>Kombination beider Methoden liefert umfassendes Verständnis</li>-->
             </ul>
         </section>
 
@@ -275,7 +358,7 @@ def _lrp_conv(self, layer, input_tensor, output_tensor, relevance):
             <h2>Vielen Dank!</h2>
             <h3>Fragen?</h3>
             <p><small>Projektteam: Lukas, Janik, Robin, Felix</small></p>
-            <p><small>Code und Präsentation: <a href="https://github.com/username/exai-corgis">github.com/username/exai-corgis</a></small></p>
+            <p><small>Code und Präsentation: <a href="https://github.com/mausio/ExAI">https://github.com/mausio/ExAI</a></small></p>
         </section>
 
     </div>
