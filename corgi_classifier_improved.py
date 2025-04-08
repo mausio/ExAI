@@ -653,6 +653,7 @@ def main():
     model = setup_model(num_classes=len(class_names))
     
     # Check if model exists and load it
+    os.makedirs(download_dir, exist_ok=True)
     model_path = os.path.join(download_dir, 'resnet50_corgi_classifier.pth')
     if os.path.exists(model_path):
         print("Loading pre-trained model...")
