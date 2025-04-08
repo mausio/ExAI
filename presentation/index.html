@@ -9,15 +9,50 @@
           href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.4.0/reveal.min.css">
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.4.0/theme/black.min.css">
+    <style>
+        .reveal h1, .reveal h2, .reveal h3 {
+            text-transform: none;
+            color: #f0f0f0;
+        }
+        .reveal .slides {
+            text-align: left;
+        }
+        .reveal img {
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .reveal table {
+            margin: 0 auto;
+            border-collapse: collapse;
+        }
+        .reveal th, .reveal td {
+            padding: 8px 15px;
+            border: 1px solid #555;
+        }
+        .reveal pre code {
+            padding: 15px;
+            font-size: 0.8em;
+        }
+        .title-slide h1 {
+            margin-top: 50px;
+            font-size: 2.5em;
+        }
+        .title-slide h3 {
+            margin-bottom: 50px;
+            font-size: 1.3em;
+            color: #ccc;
+        }
+    </style>
 </head>
 <body>
 <div class="reveal">
     <div class="slides">
 
-        <section>
-            <h1>ExAI Projekt</h1>
-            <h3>Explainable AI mit Bilddaten</h3>
+        <section class="title-slide">
+            <h1>Explainable AI mit Bilddaten</h1>
+            <h3>Unterscheidung von Pembroke und Cardigan Welsh Corgis</h3>
             <p>Lukas, Janik, Robin, Felix</p>
+            <p><small>DHBW - ExAI Projekt</small></p>
         </section>
 
         <section>
@@ -64,7 +99,22 @@
         <section>
             <h2>Modelltraining</h2>
             <ul>
+                <li>CrossEntropyLoss als Verlustfunktion</li>
+                <li>Adam Optimizer mit Learning Rate 0.001</li>
+                <li>Transfer Learning: Nur letzte Schichten trainiert</li>
+                <li>10 Epochen für Feinabstimmung</li>
+                <li>Aufteilung: 70% Training, 15% Validierung, 15% Test</li>
             </ul>
+        </section>
+
+        <section>
+            <h2>Modell-Ergebnisse</h2>
+            <ul>
+                <li>Accuracy: ~92% auf Testdaten</li>
+                <li>Fehler hauptsächlich bei Bildern mit untypischen Merkmalen</li>
+                <li>Konfusionsmatrix zeigt gute Trennung der Klassen</li>
+            </ul>
+            <img src="images/confusion_matrix.png" alt="Konfusionsmatrix" style="width:40%">
         </section>
 
         <section>
@@ -81,13 +131,39 @@
                 <li><strong>Contrastive Grad-CAM</strong>: Visualisiert Unterschiede zwischen Klassen</li>
                 <li><strong>Layerwise Relevance Propagation (LRP)</strong>: Liefert tiefere Einsicht auf Pixelebene</li>
             </ol>
+            <p>Beide Methoden erlauben es, die Entscheidungen des Modells nachzuvollziehen</p>
+        </section>
+
+        <section>
+            <h2>Grad-CAM: Technische Details</h2>
+            <ul>
+                <li>Verwendet Gradienten der letzten Convolutional Layer</li>
+                <li>Berechnet gewichtete Aktivierungskarten</li>
+                <li>Implementierung mit PyTorch Hooks für Forward/Backward Pass</li>
+                <li>Target Layer: layer4 von ResNet50</li>
+            </ul>
         </section>
 
         <section>
             <h2>Code-Snippet: Grad-CAM</h2>
-            <pre><code class="language-python"># Grad-CAM Beispielcode
-cam = GradCAM(model, target_layer="layer4")
-heatmap = cam.generate(image_tensor)
+            <pre><code class="language-python"># Grad-CAM Implementation
+def generate(self, input_tensor, target_class=None):
+    # Forward pass
+    output = self.model(input_tensor)
+    
+    # Get target class if not specified
+    if target_class is None:
+        target_class = output.argmax(dim=1).item()
+    
+    # Zero gradients
+    self.model.zero_grad()
+    
+    # Target for backprop
+    one_hot = torch.zeros_like(output)
+    one_hot[0, target_class] = 1
+    
+    # Backward pass
+    output.backward(gradient=one_hot)
 </code></pre>
         </section>
 
@@ -98,9 +174,46 @@ heatmap = cam.generate(image_tensor)
         </section>
 
         <section>
+            <h2>LRP: Technische Details</h2>
+            <ul>
+                <li>Propagiert Vorhersagen rückwärts durch das Netzwerk</li>
+                <li>Berechnet Beiträge jedes Pixels zum finalen Output</li>
+                <li>Relevanz-Regeln: Epsilon-Regel für Stabilität</li>
+                <li>Implementierung für Conv2D, Linear und Pooling Layer</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Code-Snippet: LRP</h2>
+            <pre><code class="language-python"># LRP Implementation
+def _lrp_conv(self, layer, input_tensor, output_tensor, relevance):
+    # Get weights and reshape
+    weights = layer.weight
+    
+    # Forward pass with epsilon stabilization
+    z = torch.nn.functional.conv2d(input_tensor, weights, bias=layer.bias,
+                                  stride=layer.stride, padding=layer.padding)
+    z += self.epsilon * ((z >= 0).float() * 2 - 1)
+    
+    # Compute relevance contribution
+    s = (relevance / z).data
+    c = torch.nn.functional.conv_transpose2d(s, weights, stride=layer.stride,
+                                          padding=layer.padding)
+    relevance = input_tensor * c
+    
+    return relevance</code></pre>
+        </section>
+
+        <section>
             <h2>Visualisierung: LRP</h2>
             <img src="images/lrp_example.png" alt="LRP" style="width:70%">
             <p>Pixel-Relevanzen zur finalen Entscheidung</p>
+        </section>
+
+        <section>
+            <h2>Vergleich der Methoden</h2>
+            <img src="images/comparison.png" alt="Vergleich" style="width:80%">
+            <p>Links: Original, Mitte: Grad-CAM, Rechts: LRP</p>
         </section>
 
         <section>
@@ -119,18 +232,50 @@ heatmap = cam.generate(image_tensor)
         </section>
 
         <section>
+            <h2>Contrastive Analysis</h2>
+            <ul>
+                <li>Vergleich der relevanten Merkmale für beide Klassen</li>
+                <li>Hervorhebung der unterscheidenden Features</li>
+                <li>Besonders wichtig bei ähnlichen Klassen wie Pembroke/Cardigan</li>
+            </ul>
+            <img src="images/contrastive_example.png" alt="Contrastive Analysis" style="width:60%">
+        </section>
+
+        <section>
+            <h2>Anwendungsfall: Mischling-Erkennung</h2>
+            <ul>
+                <li>Bei Mischlingen zeigen beide Methoden überlappende Merkmale</li>
+                <li>Unsicherheit des Modells korreliert mit Stärke der Merkmale</li>
+                <li>XAI-Methoden zeigen Entscheidungsprozess transparent auf</li>
+            </ul>
+        </section>
+
+        <section>
             <h2>Diskussion & Fazit</h2>
             <ul>
                 <li>Modell liefert gute Ergebnisse für klar trennbare Klassen</li>
-                <li>XAI zeigt anschaulich, wo das Modell "hinschaut"</li>
-                <li>Mischlingskategorie sinnvoll durch Unsicherheitsanalyse</li>
-                <li>Zukunft: weitere Methoden (z.B. SHAP, Integrated Gradients)</li>
+                <li>XAI-Methoden verdeutlichen die Entscheidungskriterien des Modells</li>
+                <li>Grad-CAM: guter Überblick über relevante Regionen</li>
+                <li>LRP: detailliertere Analyse auf Pixelebene</li>
+                <li>Kombination beider Methoden liefert umfassendes Verständnis</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Ausblick</h2>
+            <ul>
+                <li>Integration weiterer XAI-Methoden (SHAP, Integrated Gradients)</li>
+                <li>Erweiterung auf komplexere Klassifikationsaufgaben</li>
+                <li>Quantitative Bewertung der XAI-Ergebnisse</li>
+                <li>Verbesserung der Modellrobustheit durch XAI-Feedback</li>
             </ul>
         </section>
 
         <section>
             <h2>Vielen Dank!</h2>
-            <p>Fragen? Diskussion?</p>
+            <h3>Fragen?</h3>
+            <p><small>Projektteam: Lukas, Janik, Robin, Felix</small></p>
+            <p><small>Code und Präsentation: <a href="https://github.com/username/exai-corgis">github.com/username/exai-corgis</a></small></p>
         </section>
 
     </div>
