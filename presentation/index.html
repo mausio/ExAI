@@ -206,26 +206,8 @@
         </section>
 
         <section>
-            <h2>Code-Snippet: Grad-CAM - TODO</h2>
-            <pre><code class="language-python"># Grad-CAM Implementation
-def generate(self, input_tensor, target_class=None):
-    # Forward pass
-    output = self.model(input_tensor)
-    
-    # Get target class if not specified
-    if target_class is None:
-        target_class = output.argmax(dim=1).item()
-    
-    # Zero gradients
-    self.model.zero_grad()
-    
-    # Target for backprop
-    one_hot = torch.zeros_like(output)
-    one_hot[0, target_class] = 1
-    
-    # Backward pass
-    output.backward(gradient=one_hot)
-</code></pre>
+            <h2>Code-Snippet: Grad-CAM</h2> //TODO: füge hier ein Code Snippet für GradCAM ein
+            
         </section>
 
         <section>
@@ -259,24 +241,8 @@ def generate(self, input_tensor, target_class=None):
         </section>
 
         <section>
-            <h2>Code-Snippet: LRP - TODO</h2>
-            <pre><code class="language-python"># LRP Implementation
-def _lrp_conv(self, layer, input_tensor, output_tensor, relevance):
-    # Get weights and reshape
-    weights = layer.weight
-    
-    # Forward pass with epsilon stabilization
-    z = torch.nn.functional.conv2d(input_tensor, weights, bias=layer.bias,
-                                  stride=layer.stride, padding=layer.padding)
-    z += self.epsilon * ((z >= 0).float() * 2 - 1)
-    
-    # Compute relevance contribution
-    s = (relevance / z).data
-    c = torch.nn.functional.conv_transpose2d(s, weights, stride=layer.stride,
-                                          padding=layer.padding)
-    relevance = input_tensor * c
-    
-    return relevance</code></pre>
+            <h2>Code-Snippet: LRP - TODO</h2> //TODO: füge hier ein Code Snippet für LRP ein
+            
         </section>
 
         <section>
@@ -358,6 +324,11 @@ def _lrp_conv(self, layer, input_tensor, output_tensor, relevance):
                 <tr><td>Anwendung</td><td>schnell</td><td>detailliert</td></tr>
                 </tbody>
             </table>
+        </section>
+
+        <section>
+            <h2>Vergleich XAI-Methoden: Ergebnisse</h2>
+            <img src="images/ExAI-GradCAM_vs_LRP.png" alt="LRP-Visual" style="width: 45%; display: block; margin: 0 auto;" />
         </section>
 
         <section>
