@@ -236,19 +236,16 @@ def visualize_gradcam(model, dataloader, class_names, num_images=5):
 
 class LRP:
     """
-    Layer-wise Relevance Propagation (LRP) for CNN visualization.
-
-    This class implements the LRP technique to visualize which parts of an image
-    contribute most to a model's prediction.
-
-    Reference: Bach et al., "On Pixel-Wise Explanations for Non-Linear Classifier
-    Decisions by Layer-Wise Relevance Propagation", https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0130140
+    Simplified Layer-wise Relevance Propagation (LRP) for CNN visualization.
+    
+    This implementation uses a simpler gradient-based approach that avoids
+    the issues with tensor views and in-place modifications.
     """
-
+    
     def __init__(self, model, epsilon=1e-9):
         """
         Initializes LRP with a model
-
+        
         Args:
             model: The trained PyTorch model (ResNet50)
             epsilon: Small constant for numerical stability
@@ -256,185 +253,100 @@ class LRP:
         self.model = model
         self.epsilon = epsilon
         self.model.eval()
-
-    def _clone_module(self, module, memo=None):
-        """Create a copy of a module by recursively cloning its parameters and buffers"""
-        if memo is None:
-            memo = {}
-        if id(module) in memo:
-            return memo[id(module)]
-
-        clone = copy.deepcopy(module)
-        memo[id(module)] = clone
-
-        return clone
-
-    def _register_hooks(self, module, activations, relevances):
-        """Register forward and backward hooks for LRP"""
-        forward_hooks = []
-        backward_hooks = []
-        
-        def forward_hook(m, input, output):
-            activations[id(m)] = output.clone().detach()
-
-        def backward_hook(m, grad_in, grad_out):
-            """Modified backward pass for LRP"""
-            if id(m) in activations:
-                with torch.no_grad():
-                    # Get the activations from the forward pass
-                    a = activations[id(m)].clone()  # Clone to avoid in-place modifications
-                    grad_out_clone = grad_out[0].clone()  # Clone gradient output
-                    
-                    if isinstance(m, nn.Conv2d):
-                        # For convolutional layers
-                        if m.stride == (1, 1) and m.padding == (1, 1):
-                            w = m.weight.clone()  # Clone weight
-                            w_pos = torch.clamp(w, min=0)
-                            z = torch.nn.functional.conv2d(
-                                a, w_pos, bias=None, stride=m.stride, padding=m.padding
-                            )
-                            s = (grad_out_clone / (z + self.epsilon))
-                            c = torch.nn.functional.conv_transpose2d(
-                                s, w_pos, stride=m.stride, padding=m.padding
-                            )
-                            relevances[id(m)] = (a * c).detach().clone()  # Detach and clone the result
-                        else:
-                            # For stride > 1 or different padding, use a simpler rule
-                            relevances[id(m)] = (a * grad_out_clone).detach().clone()  # Detach and clone
-                    elif isinstance(m, nn.Linear):
-                        # For fully connected layers
-                        w = m.weight.clone()  # Clone weight
-                        w_pos = torch.clamp(w, min=0)
-                        z = torch.matmul(a, w_pos.t())
-                        s = (grad_out_clone / (z + self.epsilon))
-                        c = torch.matmul(s, w_pos)
-                        relevances[id(m)] = (a * c).detach().clone()  # Detach and clone
-                    else:
-                        # For other layer types, use a simpler propagation rule
-                        relevances[id(m)] = (a * grad_out_clone).detach().clone()  # Detach and clone
-
-        # Register hooks for all eligible modules
-        if isinstance(module, (nn.Conv2d, nn.Linear, nn.BatchNorm2d, nn.ReLU)):
-            forward_hooks.append(module.register_forward_hook(forward_hook))
-            backward_hooks.append(module.register_full_backward_hook(backward_hook))
-
-        # Recurse through all children
-        for child in module.children():
-            f_hooks, b_hooks = self._register_hooks(child, activations, relevances)
-            forward_hooks.extend(f_hooks)
-            backward_hooks.extend(b_hooks)
-
-        return forward_hooks, backward_hooks
-
+    
     def __call__(self, input_tensor, target_class=None):
         """
-        Generates the LRP heatmap for the input tensor
-
+        Generates the LRP heatmap for the input tensor using a simplified approach
+        
         Args:
-            input_tensor: Input image (must be normalized the same way as training data)
+            input_tensor: Input image tensor (must be normalized)
             target_class: Target class index. If None, uses the predicted class.
-
+            
         Returns:
             relevance_map: The normalized LRP heatmap
         """
-        input_tensor = input_tensor.clone().detach().to(device)
-        input_tensor.requires_grad = True
-
-        # Storage for activations and relevances
-        activations = {}
-        relevances = {}
-
-        # Register hooks
-        forward_hooks, backward_hooks = self._register_hooks(
-            self.model, activations, relevances
-        )
-
-        try:
-            # Forward pass
-            output = self.model(input_tensor)
-            output_clone = output.clone()  # Clone output to avoid view issues
-            
-            # If target_class is None, use predicted class
-            if target_class is None:
-                target_class = torch.argmax(output, dim=1).item()
-
-            # One-hot encoding for the target class
-            one_hot = torch.zeros_like(output)
-            one_hot[0, target_class] = 1.0
-
-            # Backward pass for LRP
-            self.model.zero_grad()
-            output_clone.backward(gradient=one_hot, retain_graph=True)
-
-            # Extract the input gradient as the initial relevance map
-            input_gradient = input_tensor.grad.data
-
-            # Get the relevance map for the first layer (closest to input)
-            first_layer_id = None
-            for module in self.model.modules():
-                if isinstance(module, nn.Conv2d):
-                    first_layer_id = id(module)
-                    break
-
-            if first_layer_id in relevances:
-                relevance_map = relevances[first_layer_id]
-            else:
-                # Fallback to input gradient if we can't get the relevance map
-                relevance_map = input_gradient
-
-            # Sum across channels
-            relevance_map = relevance_map.sum(dim=1).squeeze()
-
-            # Normalize to 0-1
-            relevance_map = torch.abs(relevance_map)
-            if torch.max(relevance_map) > 0:
-                relevance_map = relevance_map / torch.max(relevance_map)
-
-            return relevance_map.cpu().numpy()
-        except Exception as e:
-            print(f"Error during LRP computation: {e}")
-            return None
-        finally:
-            # Remove all hooks
-            for hook in forward_hooks + backward_hooks:
-                hook.remove()
-
+        # Make a detached copy of the input that requires gradient
+        input_copy = input_tensor.clone().detach().to(device)
+        input_copy.requires_grad = True
+        
+        # Forward pass
+        self.model.zero_grad()
+        output = self.model(input_copy)
+        
+        # If target_class is None, use predicted class
+        if target_class is None:
+            target_class = torch.argmax(output, dim=1).item()
+        
+        # One-hot encoding for the target class
+        one_hot = torch.zeros_like(output)
+        one_hot[0, target_class] = 1.0
+        
+        # Backward pass to get gradients
+        output.backward(gradient=one_hot)
+        
+        # Get the gradient with respect to the input
+        # This represents how much each input pixel affects the output
+        grad = input_copy.grad.clone()
+        
+        # Element-wise product of input and gradient
+        # This gives us a relevance map highlighting important features
+        relevance = (input_copy * grad).sum(dim=1).squeeze()
+        
+        # Take absolute value and normalize
+        relevance = torch.abs(relevance)
+        if torch.max(relevance) > 0:
+            relevance = relevance / torch.max(relevance)
+        
+        return relevance.detach().cpu().numpy()
 
 def apply_lrp(model, img_tensor, img_np, target_class=None):
     """
-    Applies LRP to visualize model contributions
-
+    Applies simplified LRP to visualize model contributions
+    
     Args:
         model: Trained PyTorch model
         img_tensor: Input image tensor (1, C, H, W)
         img_np: Original numpy image for visualization (RGB)
         target_class: Target class for visualization
-
+        
     Returns:
         visualization: Heatmap overlaid on original image
         relevance_map: Raw relevance map
     """
     # Create LRP instance
     lrp = LRP(model)
-
-    # Generate relevance map
-    relevance_map = lrp(img_tensor, target_class)
-
-    # Resize relevance map to input image size
-    relevance_resized = cv2.resize(relevance_map, (img_np.shape[1], img_np.shape[0]))
-
-    # Convert to heatmap
-    heatmap = cv2.applyColorMap(np.uint8(255 * relevance_resized), cv2.COLORMAP_JET)
-
-    # Convert to RGB (from BGR)
-    heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
-
-    # Overlay heatmap on original image
-    alpha = 0.4
-    visualization = heatmap * alpha + img_np * (1 - alpha)
-    visualization = np.uint8(visualization)
-
-    return visualization, relevance_map
+    
+    try:
+        # Generate relevance map
+        relevance_map = lrp(img_tensor, target_class)
+        
+        if relevance_map is None:
+            # Return a blank heatmap if LRP fails
+            relevance_map = np.zeros((img_np.shape[0], img_np.shape[1]))
+            visualization = img_np.copy()
+            return visualization, relevance_map
+        
+        # Resize relevance map to input image size
+        relevance_resized = cv2.resize(relevance_map, (img_np.shape[1], img_np.shape[0]))
+        
+        # Convert to heatmap
+        heatmap = cv2.applyColorMap(np.uint8(255 * relevance_resized), cv2.COLORMAP_JET)
+        
+        # Convert to RGB (from BGR)
+        heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
+        
+        # Overlay heatmap on original image
+        alpha = 0.4
+        visualization = heatmap * alpha + img_np * (1 - alpha)
+        visualization = np.uint8(visualization)
+        
+        return visualization, relevance_map
+    except Exception as e:
+        print(f"Error during LRP computation: {e}")
+        # Return a blank heatmap if LRP fails
+        relevance_map = np.zeros((img_np.shape[0], img_np.shape[1]))
+        visualization = img_np.copy()
+        return visualization, relevance_map
 
 
 def visualize_lrp(model, dataloader, class_names, num_images=5):
@@ -528,7 +440,7 @@ def compare_xai_methods(model, dataloader, class_names, num_images=3):
     labels = labels[:num_images]
 
     # Create a figure
-    fig, axes = plt.subplots(num_images, 2, figsize=(15, 5 * num_images))
+    fig, axes = plt.subplots(num_images, 3, figsize=(15, 5 * num_images))
 
     for i, (image, label) in enumerate(zip(images, labels)):
         # Convert to numpy image for display
