@@ -23,8 +23,15 @@
         <section>
             <h2>Problemstellung</h2>
             <p>Unterscheidung von <strong>Pembroke</strong> und <strong>Cardigan Corgis</strong> mit Hilfe eines CNN.</p>
+        </section>
+
+        <section>
+            <h2>Untersuchung</h2>
+            <p>Beobachtung des Verhaltens bei Input von Mischlingen</p>
             <p>Ziel: Erklärbare Entscheidungen durch XAI-Methoden</p>
         </section>
+
+
 
         <section>
             <h2>Datensatz</h2>
@@ -32,7 +39,6 @@
                 <li><strong>Stanford Dogs Dataset</strong></li>
                 <li>120 Hunderassen, über 20.000 Bilder</li>
                 <li>Verwendung der Klassen: Pembroke & Cardigan Welsh Corgi</li>
-                <li>Zusatzkategorie: "Mischling" durch Softmax-Unsicherheit</li>
                 <li><a href="http://vision.stanford.edu/aditya86/ImageNetDogs/">Link zum Datensatz</a></li>
             </ul>
         </section>
@@ -40,8 +46,7 @@
         <section>
             <h2>Datenvorverarbeitung</h2>
             <ul>
-                <li>Bounding Boxes aus Annotations extrahiert (MAT-Dateien)</li>
-                <li>Train/Test/Val-Split aus .mat-Files geladen</li>
+                <li>Train/Test/Val-Split</li>
                 <li>Resize auf 224x224px</li>
                 <li>Normalisierung auf Imagenet-Mittelwerte</li>
             </ul>
@@ -51,7 +56,7 @@
             <h2>Modell</h2>
             <ul>
                 <li>Transfer Learning mit ResNet50</li>
-                <li>Pretrained auf ImageNet, Fine-Tuning auf Corgis</li>
+                <li>Pretrained auf ImageNet, Fine-Tuning auf Corgis (Pembroke&Cardigan)</li>
                 <li>Nur letzte Layer ersetzt: Dense Layer für 2-Klassen Klassifikation</li>
             </ul>
         </section>
@@ -59,18 +64,12 @@
         <section>
             <h2>Modelltraining</h2>
             <ul>
-                <li>Loss: Categorical Cross-Entropy</li>
-                <li>Optimizer: Adam, LR: 0.0001</li>
-                <li>Batchsize: 32, Epochs: 20</li>
-                <li>Val Accuracy: 91.3%</li>
-                <li>Frühzeitiges Stoppen bei Overfitting</li>
             </ul>
         </section>
 
         <section>
             <h2>Erkennung von Mischlingen</h2>
             <ul>
-                <li>Zusätzliche Logik: Wenn Softmax-Ausgabe < 0.6 bei beiden Klassen → Label: "Mischling"</li>
                 <li>Beispielbilder zeigen überlappende Merkmale von beiden Corgi-Typen</li>
                 <li>Modell "unsicher" → Indiz für fehlende Klarheit der Merkmale</li>
             </ul>
