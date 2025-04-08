@@ -181,7 +181,7 @@ def visualize_gradcam(model, dataloader, class_names, num_images=5):
     labels = labels[:num_images]
 
     # Create a figure
-    fig, axes = plt.subplots(num_images, 2, figsize=(15, 5 * num_images))
+    fig, axes = plt.subplots(num_images, 3, figsize=(15, 5 * num_images))
 
     for i, (image, label) in enumerate(zip(images, labels)):
         # Convert to numpy image for display
@@ -273,16 +273,18 @@ class LRP:
         """Register forward and backward hooks for LRP"""
         forward_hooks = []
         backward_hooks = []
-
+        
         def forward_hook(m, input, output):
-            activations[id(m)] = output.detach()
+            activations[id(m)] = output.clone().detach()
 
         def backward_hook(m, grad_in, grad_out):
+            # TODO: This fails! Does return 0 for some reason..
             """Modified backward pass for LRP"""
             if id(m) in activations:
                 with torch.no_grad():
                     # Get the activations from the forward pass
                     a = activations[id(m)]
+                    grad_out = grad_out[0].clone()
                     if isinstance(m, nn.Conv2d):
                         # For convolutional layers
                         if m.stride == (1, 1) and m.padding == (1, 1):
@@ -291,25 +293,25 @@ class LRP:
                             z = torch.nn.functional.conv2d(
                                 a, w_pos, bias=None, stride=m.stride, padding=m.padding
                             )
-                            s = (grad_out[0].clone() / (z + self.epsilon)).data
+                            s = (grad_out / (z + self.epsilon)).data
                             c = torch.nn.functional.conv_transpose2d(
                                 s, w_pos, stride=m.stride, padding=m.padding
                             )
                             relevances[id(m)] = (a * c).data
                         else:
                             # For stride > 1 or different padding, use a simpler rule
-                            relevances[id(m)] = (a * grad_out[0]).data
+                            relevances[id(m)] = (a * grad_out).data
                     elif isinstance(m, nn.Linear):
                         # For fully connected layers
                         w = m.weight
                         w_pos = torch.clamp(w, min=0)
                         z = torch.matmul(a, w_pos.t())
-                        s = (grad_out[0] / (z + self.epsilon)).data
+                        s = (grad_out / (z + self.epsilon)).data
                         c = torch.matmul(s, w_pos)
                         relevances[id(m)] = (a * c).data
                     else:
                         # For other layer types, use a simpler propagation rule
-                        relevances[id(m)] = (a * grad_out[0]).data
+                        relevances[id(m)] = (a * grad_out).data
 
         # Register hooks for all eligible modules
         if isinstance(module, (nn.Conv2d, nn.Linear, nn.BatchNorm2d, nn.ReLU)):
@@ -347,23 +349,10 @@ class LRP:
             self.model, activations, relevances
         )
 
-        """
-        Ausnahme: RuntimeError
-        Output 0 of BackwardHookFunctionBackward is a view and is being modified inplace.
-        This view was created inside a custom Function (or because an input was returned as-is)
-        and the autograd logic to handle view+inplace would override the custom backward associated
-        with the custom Function, leading to incorrect gradients. This behavior is forbidden.
-        You can fix this by cloning the output of the custom Function.
-        
-            output = self.model(input_tensor)
-                    ^^^^^^^^^^^^^^^^^^^^^^^^
-        Lösung via .clone() .. so dumm, dachte vorher den tensor klonen zu müssen.
-        """
-
         try:
             # Forward pass - clone the output to avoid view issues during backward pass
             output = self.model(input_tensor).clone()
-
+            
             # If target_class is None, use predicted class
             if target_class is None:
                 target_class = torch.argmax(output, dim=1).item()
@@ -401,7 +390,9 @@ class LRP:
                 relevance_map = relevance_map / torch.max(relevance_map)
 
             return relevance_map.cpu().numpy()
-
+        except Exception as e:
+            print(f"Error during LRP computation: {e}")
+            return None
         finally:
             # Remove all hooks
             for hook in forward_hooks + backward_hooks:
