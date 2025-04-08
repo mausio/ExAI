@@ -639,8 +639,8 @@ def load_model(load_path, model=None):
 def main():
     """Main execution function"""
     # Directory setup
-    download_dir = "/content/drive/MyDrive/xAI-Corgis"
-    extract_dir = "/content/dogs"
+    download_dir = "/content/drive/MyDrive/xAI-Corgis" # TODO: Change to local directory
+    extract_dir = "/content/dogs" # TODO: Change to local directory 
     
     # Download and extract dataset
     download_and_extract_dataset(download_dir, extract_dir)
@@ -678,3 +678,5 @@ def main():
 
 if __name__ == "__main__":
     main() 
+
+    
