@@ -113,6 +113,10 @@ seaborn>=0.11.2
 pillow>=8.3.1
 ```
 
+```sh
+pip install numpy matplotlib seaborn tqdm Pillow opencv-python torch torchvision scikit-learn
+```
+
 ### Setting Up
 
 1. Clone the repository:
