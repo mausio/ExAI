@@ -99,9 +99,17 @@
         <section>
             <h2>Datenvorverarbeitung - TODO</h2>
             <ul>
-                <li>Train/Test/Val-Split</li>
-                <li>Resize auf 224x224px</li>
-                <li>Normalisierung auf Imagenet-Mittelwerte</li>
+                <li>Train/Val-Split im Verhältnis 80%/20%</li>
+                <li>Bildtransformationen für Trainingsdaten:
+                    <ul>
+                        <li>Resize auf 224x224px</li>
+                        <li>Random Horizontal Flip</li>
+                        <li>Random Rotation (10°)</li>
+                        <li>Color Jitter (Helligkeit, Kontrast, Sättigung)</li>
+                    </ul>
+                </li>
+                <li>Für Validierungsdaten: nur Resize und Normalisierung</li>
+                <li>Normalisierung mit ImageNet-Mittelwerten: [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]</li>
             </ul>
         </section>
 
@@ -136,9 +144,11 @@
         <section>
             <h2>Modell-Ergebnisse - TODO</h2>
             <ul>
-                <li>Accuracy: ~92% auf Testdaten</li>
-                <li>Fehler hauptsächlich bei Bildern mit untypischen Merkmalen</li>
-                <li>Konfusionsmatrix zeigt gute Trennung der Klassen</li>
+                <li>Accuracy: >90% auf Validierungsdaten</li>
+                <li>Transfer Learning mit Fine-Tuning der letzten Layer (layer4)</li>
+                <li>Früher Trainingsabbruch durch Early Stopping (patience=5)</li>
+                <li>Adaptive Lernrate mit ReduceLROnPlateau Scheduler</li>
+                <li>Beste Ergebnisse bei Bildern mit klaren rassetypischen Merkmalen</li>
             </ul>
             <div>
                 <img src="images/ExAI-Loss-and-Accuracy.png" alt="Loss and Accuracy" style="width:60.5%">
@@ -149,8 +159,15 @@
         <section>
             <h2>Erkennung von Mischlingen - TODO</h2>
             <ul>
-                <li>Beispielbilder zeigen überlappende Merkmale von beiden Corgi-Typen</li>
-                <li>Modell "unsicher" → Indiz für fehlende Klarheit der Merkmale</li>
+                <li>Herausforderung: Mischlings-Corgis zeigen Merkmale beider Rassen</li>
+                <li>Bei Bildern mit gemischten Charakteristika:
+                    <ul>
+                        <li>Niedrigere Konfidenz in der Vorhersage (meist <75%)</li>
+                        <li>Aktivierungsmuster von GradCAM zeigen Überlappungen</li>
+                        <li>LRP identifiziert widersprüchliche Merkmale beider Rassen</li>
+                    </ul>
+                </li>
+                <li>XAI-Methoden ermöglichen Einblick in die "Unsicherheit" des Modells</li>
                 <img src="./images/niko-royalty-free-image-1726720063.png" alt="Beispielbild_Corgi" style="width:40%">
             </ul>
         </section>
@@ -202,9 +219,15 @@ def generate(self, input_tensor, target_class=None):
         </section>
 
         <section>
-            <h2>Visualisierung: Grad-CAM - TODO</h2>
+            <h2>Visualisierung: Grad-CA - TODO</h2>
+            <ul>
+                <li>Hervorhebung entscheidungsrelevanter Bildregionen</li>
+                <li>Bei Pembroke: Fokus auf Kopfform, Ohren und kurzen Schwanz</li>
+                <li>Bei Cardigan: Fokus auf größere Ohren und längeren Schwanz</li>
+                <li>Nutzung des letzten Convolutional Layers (layer4 von ResNet50)</li>
+            </ul>
             <img src="images/gradcam_example.png" alt="Grad-CAM" style="width:70%">
-            <p>Hervorgehobene Regionen für Entscheidung "Pembroke"</p>
+            <p>Heatmap zeigt die für die Klassifikation relevanten Regionen</p>
         </section>
 
         <section>
@@ -239,9 +262,20 @@ def _lrp_conv(self, layer, input_tensor, output_tensor, relevance):
         </section>
 
         <section>
-            <h2>Visualisierung: LRP - TODO</h2>
+            <h2>Visualisierung: LRP - TODO </h2>
+            <ul>
+                <li>Feinkörnige Visualisierung der Pixelrelevanz durch alle Netzwerkschichten hinweg</li>
+                <li>Höhere Detailtiefe als GradCAM durch Berücksichtigung aller Layeraktivierungen</li>
+                <li>Zeigt spezifische anatomische Details:
+                    <ul>
+                        <li>Bei Pembroke: Fokus auf Kopfform, Ohren und bestimmte Fellmuster</li>
+                        <li>Bei Cardigan: Deutliche Aktivierung am Schwanz und den größeren Ohren</li>
+                    </ul>
+                </li>
+                <li>Höherer Rechenaufwand, aber detailliertere Erklärung der Modellentscheidung</li>
+            </ul>
             <img src="images/lrp_example.png" alt="LRP" style="width:70%">
-            <p>Pixel-Relevanzen zur finalen Entscheidung</p>
+            <p>Detaillierte Pixel-Relevanzverteilung zur finalen Entscheidung</p>
         </section>
 
         <section>
