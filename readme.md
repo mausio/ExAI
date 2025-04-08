@@ -32,6 +32,10 @@ We use the [Stanford Dogs Dataset](http://vision.stanford.edu/aditya86/ImageNetD
 
 ## Usage
 
+```sh
+pip install numpy matplotlib seaborn tqdm Pillow opencv-python torch torchvision scikit-learn
+```
+
 ### Setting Up
 
 1. Install dependencies:
