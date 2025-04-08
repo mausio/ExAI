@@ -275,7 +275,6 @@ def setup_model(num_classes=2):
         nn.Linear(512, num_classes)
     )
     
-    
     # Move model to device
     model = model.to(device)
     
@@ -646,6 +645,42 @@ def load_model(load_path, model=None):
         print(f"Error loading model: {e}")
         return None, None
 
+
+# ============================================================================
+# Section 8.9: Main Execution
+# ============================================================================
+# Create a manual loader for a specific image
+class SingleImageDataset(Dataset):
+    def __init__(self, image_path, transform=None):
+        """
+        Dataset for loading a single image without a label
+        
+        Args:
+            image_path: Path to the image file
+            transform: PyTorch transforms for preprocessing
+        """
+        self.image_path = image_path
+        self.transform = transform
+        
+    def __len__(self):
+        return 1  # Only one image
+        
+    def __getitem__(self, idx):
+        # Load image
+        try:
+            image = Image.open(self.image_path).convert('RGB')
+            
+            if self.transform:
+                image = self.transform(image)
+                
+            return image, -1  # -1 as a placeholder label since we don't have one
+        except Exception as e:
+            print(f"Error loading image {self.image_path}: {e}")
+            # Return a blank image
+            blank_image = torch.zeros((3, 224, 224)) if self.transform else Image.new('RGB', (224, 224), (0, 0, 0))
+            return blank_image, -1
+
+
 # ============================================================================
 # Section 9: Main Execution
 # ============================================================================
@@ -699,13 +734,43 @@ def main():
     print("Applying XAI Methods for Model Interpretability")
     print("="*50)
     # ! Did fail here last due to missing function.
-    # Visualize with GradCAM
-    print("\nGenerating GradCAM visualizations...")
-    visualize_gradcam(model, val_loader, class_names, num_images=images_to_apply_xai_on)
-    
     # Visualize with LRP
-    print("\nGenerating Layer-wise Relevance Propagation visualizations...")
-    visualize_lrp(model, val_loader, class_names, num_images=images_to_apply_xai_on)
+    # print("\nGenerating Layer-wise Relevance Propagation visualizations...")
+    # visualize_lrp(model, val_loader, class_names, num_images=images_to_apply_xai_on)
+    # is deterministic, as it does take first 5 images.
+    
+    # Visualize Manual Image 
+    # Create a manual loader for a specific image
+    print("\nLoading manual image for inference...")
+    manual_transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+
+    # Path to the specific image
+    manual_image_path = "./assets/corgi-mischling.jpg"
+
+    # Create dataset and loader for the single image
+    manual_dataset = SingleImageDataset(manual_image_path, transform=manual_transform)
+    manual_loader = DataLoader(manual_dataset, batch_size=1, shuffle=False)
+
+    print(f"Manual loader created for image: {manual_image_path}")
+    
+    # print("\nManual LRP visualizations...")
+    # visualize_lrp(model, manual_loader, class_names, num_images=images_to_apply_xai_on)
+    
+    # Visualize VAL with GradCAM
+    # print("\nManual GradCAM visualizations...")
+    # visualize_gradcam(model, manual_loader, class_names, num_images=images_to_apply_xai_on)
+    
+    # Compare both XAI methods
+    # print("\nManual GradCAM and LRP methods...")
+    compare_xai_methods(model, manual_loader, class_names, num_images=3)
+        
+    # Visualize VAL with GradCAM
+    # print("\nGenerating GradCAM visualizations...")
+    # visualize_gradcam(model, val_loader, class_names, num_images=images_to_apply_xai_on)
     
     # Compare both XAI methods
     print("\nComparing GradCAM and LRP methods...")

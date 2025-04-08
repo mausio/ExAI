@@ -359,6 +359,7 @@ def visualize_lrp(model, dataloader, class_names, num_images=5):
         class_names: Names of the classes
         num_images: Number of images to visualize
     """
+    # TODO: Display LRP per Layer
     # Set model to evaluation mode
     model.eval()
 
@@ -390,7 +391,7 @@ def visualize_lrp(model, dataloader, class_names, num_images=5):
 
         # Generate LRP for true class
         true_lrp, _ = apply_lrp(model, input_tensor, img_np, label.item())
-
+        
         # Generate LRP for predicted class
         pred_lrp, _ = apply_lrp(model, input_tensor, img_np, pred.item())
 
