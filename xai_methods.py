@@ -278,40 +278,40 @@ class LRP:
             activations[id(m)] = output.clone().detach()
 
         def backward_hook(m, grad_in, grad_out):
-            # TODO: This fails! Does return 0 for some reason..
             """Modified backward pass for LRP"""
             if id(m) in activations:
                 with torch.no_grad():
                     # Get the activations from the forward pass
-                    a = activations[id(m)]
-                    grad_out = grad_out[0].clone()
+                    a = activations[id(m)].clone()  # Clone to avoid in-place modifications
+                    grad_out_clone = grad_out[0].clone()  # Clone gradient output
+                    
                     if isinstance(m, nn.Conv2d):
                         # For convolutional layers
                         if m.stride == (1, 1) and m.padding == (1, 1):
-                            w = m.weight
+                            w = m.weight.clone()  # Clone weight
                             w_pos = torch.clamp(w, min=0)
                             z = torch.nn.functional.conv2d(
                                 a, w_pos, bias=None, stride=m.stride, padding=m.padding
                             )
-                            s = (grad_out / (z + self.epsilon)).data
+                            s = (grad_out_clone / (z + self.epsilon))
                             c = torch.nn.functional.conv_transpose2d(
                                 s, w_pos, stride=m.stride, padding=m.padding
                             )
-                            relevances[id(m)] = (a * c).data
+                            relevances[id(m)] = (a * c).detach().clone()  # Detach and clone the result
                         else:
                             # For stride > 1 or different padding, use a simpler rule
-                            relevances[id(m)] = (a * grad_out).data
+                            relevances[id(m)] = (a * grad_out_clone).detach().clone()  # Detach and clone
                     elif isinstance(m, nn.Linear):
                         # For fully connected layers
-                        w = m.weight
+                        w = m.weight.clone()  # Clone weight
                         w_pos = torch.clamp(w, min=0)
                         z = torch.matmul(a, w_pos.t())
-                        s = (grad_out / (z + self.epsilon)).data
+                        s = (grad_out_clone / (z + self.epsilon))
                         c = torch.matmul(s, w_pos)
-                        relevances[id(m)] = (a * c).data
+                        relevances[id(m)] = (a * c).detach().clone()  # Detach and clone
                     else:
                         # For other layer types, use a simpler propagation rule
-                        relevances[id(m)] = (a * grad_out).data
+                        relevances[id(m)] = (a * grad_out_clone).detach().clone()  # Detach and clone
 
         # Register hooks for all eligible modules
         if isinstance(module, (nn.Conv2d, nn.Linear, nn.BatchNorm2d, nn.ReLU)):
@@ -350,8 +350,9 @@ class LRP:
         )
 
         try:
-            # Forward pass - clone the output to avoid view issues during backward pass
-            output = self.model(input_tensor).clone()
+            # Forward pass
+            output = self.model(input_tensor)
+            output_clone = output.clone()  # Clone output to avoid view issues
             
             # If target_class is None, use predicted class
             if target_class is None:
@@ -363,7 +364,7 @@ class LRP:
 
             # Backward pass for LRP
             self.model.zero_grad()
-            output.backward(gradient=one_hot, retain_graph=True)
+            output_clone.backward(gradient=one_hot, retain_graph=True)
 
             # Extract the input gradient as the initial relevance map
             input_gradient = input_tensor.grad.data
