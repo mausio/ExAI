@@ -42,6 +42,43 @@
             font-size: 1.3em;
             color: #ccc;
         }
+
+        .reveal p {
+            font-size: 0.7em;
+        }
+
+        .reveal li {
+            font-size: 0.75em;
+        }
+
+        .reveal td {
+            font-size: 0.9em;
+        }
+
+        .reveal th {
+            font-size: 0.9em;
+        }
+
+        .reveal tr {
+            font-size: 0.9em;
+        }
+
+        .reveal h4 {
+            font-size: 1.0em;
+        }
+
+        .reveal h3 {
+            font-size: 1.2em;
+        }
+
+        .reveal h2 {
+            font-size: 1.3em;
+        }
+
+        .reveal h1 {
+            font-size: 1.5em;
+        }
+
     </style>
 </head>
 <body>
@@ -147,38 +184,35 @@
                 <li>Accuracy: >90% auf Validierungsdaten</li>
                 <li>Transfer Learning mit Fine-Tuning der letzten Layer (layer4)</li>
                 <li>Früher Trainingsabbruch durch Early Stopping (patience=5)</li>
-            </ul>
-            <img src="images/ExAI-Loss-and-Accuracy.png" alt="Loss and Accuracy" style="width:60%; display:block; margin: 0 auto;"/>
-        </section>
-
-        <section>
-            <h2>Modell-Ergebnisse</h2>
-            <ul>
                 <li>Adaptive Lernrate mit ReduceLROnPlateau Scheduler</li>
                 <li>Beste Ergebnisse bei Bildern mit klaren rassetypischen Merkmalen</li>
             </ul>
+            <img src="images/ExAI-Loss-and-Accuracy.png" alt="Loss and Accuracy" style="width:60%; display:block; margin: 0 auto;"/>
+            <p style="font-size: 0.8em; text-align: center;">
+                Konstante Abnahme des Trainingsverlusts und Zunahme der Genauigkeit ohne Überanpassung.
+                Die Validierungskurve stabilisiert sich bei etwa 93% Genauigkeit.
+            </p>
+        </section>
+
+        <section>
+            <h2>Modell-Ergebnisse: Confusion Matrix</h2>
             <img src="images/ExAI-Confusion-Matrix.png" alt="Konfusionsmatrix" style="width:40%; display:block; margin: 0 auto;"/>
+            <p style="font-size: 0.8em; text-align: center;">
+                Die Konfusionsmatrix zeigt: 38 korrekte Pembroke- und 24 korrekte Cardigan-Vorhersagen.
+                Nur 6 Fehler insgesamt, hauptsächlich Cardigans als Pembrokes klassifiziert.
+            </p>
         </section>
 
         <section>
-            <h2>Erkennung von Mischlingen</h2>
+            <h2>Ethische Betrachtungen</h2>
+            <h3 style="font-size: 1em;">Ethik & Verantwortung</h3>
             <ul>
-                <li>Herausforderung: Mischlings-Corgis zeigen Merkmale beider Rassen</li>
-                <li>Bei Bildern mit gemischten Charakteristika:
-                    <ul>
-                        <li>Niedrigere Konfidenz in der Vorhersage (meist <75%)</li>
-                        <li>Aktivierungsmuster von GradCAM zeigen Überlappungen</li>
-                        <li>LRP identifiziert widersprüchliche Merkmale beider Rassen</li>
-                    </ul>
-                </li>
-            </ul>
-        </section>
-
-        <section>
-            <h2>Erkennung von Mischlingen</h2>
-            <ul>
-                <li>XAI-Methoden ermöglichen Einblick in die "Unsicherheit" des Modells</li>
-                <img src="./images/niko-royalty-free-image-1726720063.png" alt="Beispielbild_Corgi" style="width:40%">
+                <li>Transparenz als Voraussetzung für verantwortungsvolle KI-Systeme</li>
+                <li>Vermeidung von Biases durch erklärbare Entscheidungsprozesse</li>
+                <li>Datenschutz bei der Erfassung und Verarbeitung von Bilddaten</li>
+                <li>Berücksichtigung ethischer Aspekte bei der Entwicklung von XAI-Methoden</li>
+                <li>Förderung des Vertrauens in KI-Systeme durch transparente Entscheidungen</li>
+                <li>Verantwortlicher Einsatz von KI in sensiblen Anwendungsbereichen</li>
             </ul>
         </section>
 
@@ -187,12 +221,13 @@
         </section>
 
         <section>
-            <h2>XAI-Verfahren</h2>
+            <h2>XAI-Verfahren im Überblick</h2>
             <ol>
                 <li><strong>Contrastive Grad-CAM</strong>: Visualisiert Unterschiede zwischen Klassen</li>
                 <li><strong>Layerwise Relevance Propagation (LRP)</strong>: Liefert tiefere Einsicht auf Pixelebene</li>
             </ol>
             <p>Beide Methoden erlauben es, die Entscheidungen des Modells nachzuvollziehen</p>
+            <p>Direkte Vergleichsmöglichkeit der Erklärungsansätze bei verschiedenen Bildtypen (reinrassig vs. Mischlinge)</p>
         </section>
 
         <section>
@@ -206,8 +241,63 @@
         </section>
 
         <section>
-            <h2>Code-Snippet: Grad-CAM</h2> //TODO: füge hier ein Code Snippet für GradCAM ein
-            
+            <h2>Code-Snippet: Grad-CAM</h2>
+            <h3>Teil 1: Forward Pass & Gradient-Berechnung</h3>
+            <pre><code class="python" style="font-size: 0.7em; max-height: 350px;">
+def __call__(self, input_tensor, target_class=None):
+    # Forward pass
+    input_tensor = input_tensor.to(device)
+    self.model.zero_grad()
+    
+    # Forward pass through model
+    output = self.model(input_tensor)
+    
+    # Use predicted class if none specified
+    if target_class is None:
+        target_class = torch.argmax(output, dim=1).item()
+    
+    # One-hot encoding for target class
+    one_hot = torch.zeros_like(output)
+    one_hot[0, target_class] = 1
+    
+    # Backward pass to get gradients
+    output.backward(gradient=one_hot, retain_graph=True)
+            </code></pre>
+        </section>
+
+        <section>
+            <h2>Code-Snippet: Grad-CAM</h2>
+            <h3>Teil 2: Aktivierungs-Gewichtung & Heatmap-Generierung</h3>
+            <pre><code class="python" style="font-size: 0.7em; max-height: 350px;">
+    # Weight the activations by gradients
+    pooled_gradients = torch.mean(self.gradients, dim=[0, 2, 3])
+    for i in range(pooled_gradients.shape[0]):
+        self.activations[:, i, :, :] *= pooled_gradients[i]
+    
+    # Average activations over channels
+    cam = torch.mean(self.activations, dim=1).squeeze()
+    
+    # Apply ReLU and normalize
+    cam = torch.maximum(cam, torch.tensor(0.0).to(device))
+    if torch.max(cam) > 0:
+        cam = cam / torch.max(cam)
+        
+    return cam.cpu().numpy()
+            </code></pre>
+        </section>
+
+        <section>
+            <h2>Visualisierung: Grad-CAM</h2> 
+            <p>Heatmap zeigt die für die Klassifikation relevanten Regionen:</p>
+            <div style="display: flex; align-items: center;">
+                <img src="images/GradCAM-Beispiele.png" alt="Grad-CAM-Visual" style="width: 20%; margin-right: 20px; align-self: flex-start;" />
+                    <ul style="font-size: 0.85em; align-self: flex-start;">
+                        <li>Rote/gelbe Bereiche zeigen Hauptaufmerksamkeit des Modells</li>
+                        <li>Bei Pembroke: Aktivierung im Kopf- und Halsbereich, typisch für die kürzere Statur</li>
+                        <li>Bei Cardigan: Verstärkte Aktivierung im Schwanzbereich und größeren Ohren</li>
+                        <li>Unterschiedliche Färbungsmuster beeinflussen Entscheidungsfindung</li>
+                    </ul>
+              </div>
         </section>
 
         <section>
@@ -221,16 +311,6 @@
         </section>
 
         <section>
-            <h2>Visualisierung: Grad-CAM</h2> 
-            <div style="display: flex; align-items: center;">
-                <img src="images/GradCAM-Beispiele.png" alt="Grad-CAM-Visual" style="width: 20%; margin-right: 20px;" />
-                <p>
-                    Heatmap zeigt die für die Klassifikation relevanten Regionen
-                </p>
-              </div>
-        </section>
-
-        <section>
             <h2>LRP: Technische Details</h2>
             <ul>
                 <li>Propagiert Vorhersagen rückwärts durch das Netzwerk</li>
@@ -241,23 +321,48 @@
         </section>
 
         <section>
-            <h2>Code-Snippet: LRP - TODO</h2> //TODO: füge hier ein Code Snippet für LRP ein
-            
+            <h2>Code-Snippet: LRP</h2>
+            <h3>Teil 1: Vorbereitung & Forward Pass</h3>
+            <pre><code class="python" style="font-size: 0.7em; max-height: 350px;">
+def __call__(self, input_tensor, target_class=None):
+    # Clone input tensor and enable gradient tracking
+    input_copy = input_tensor.clone().detach().to(device)
+    input_copy.requires_grad = True
+    
+    # Forward pass
+    self.model.zero_grad()
+    output = self.model(input_copy)
+    
+    # Use predicted class if none specified
+    if target_class is None:
+        target_class = torch.argmax(output, dim=1).item()
+    
+    # Create one-hot encoding for target class
+    one_hot = torch.zeros_like(output)
+    one_hot[0, target_class] = 1.0
+    
+    # Backward pass to get gradients
+    output.backward(gradient=one_hot)
+            </code></pre>
         </section>
 
         <section>
-            <h2>Visualisierung: LRP</h2>
-            <ul>
-                <li>Feinkörnige Visualisierung der Pixelrelevanz durch alle Netzwerkschichten hinweg</li>
-                <li>Höhere Detailtiefe als GradCAM durch Berücksichtigung aller Layeraktivierungen</li>
-                <li>Zeigt spezifische anatomische Details:
-                    <ul>
-                        <li>Bei Pembroke: Fokus auf Kopfform, Ohren und bestimmte Fellmuster</li>
-                        <li>Bei Cardigan: Deutliche Aktivierung am Schwanz und den größeren Ohren</li>
-                    </ul>
-                </li>
-                <li>Höherer Rechenaufwand, aber detailliertere Erklärung der Modellentscheidung</li>
-            </ul>
+            <h2>Code-Snippet: LRP</h2>
+            <h3>Teil 2: Relevanz-Berechnung & Normalisierung</h3>
+            <pre><code class="python" style="font-size: 0.7em; max-height: 350px;">
+    # Get gradients with respect to input
+    grad = input_copy.grad.clone()
+    
+    # Calculate relevance as element-wise product
+    relevance = (input_copy * grad).sum(dim=1).squeeze()
+    
+    # Take absolute value and normalize
+    relevance = torch.abs(relevance)
+    if torch.max(relevance) > 0:
+        relevance = relevance / torch.max(relevance)
+    
+    return relevance.detach().cpu().numpy()
+            </code></pre>
         </section>
 
         <section>
@@ -271,42 +376,108 @@
         </section>
 
         <section>
-            <h2>Vergleich XAI-Methoden: Interpretierbarkeit</h2>
+            <h2>Vergleich der XAI-Methoden bei Rassenmerkmalen</h2>
+            <div style="display: flex;">
+                <div style="flex: 1;">
+                    <h3 style="font-size: 0.9em;">Pembroke Welsh Corgi</h3>
+                    <ul>
+                        <li>Fokus auf fuchsartige Kopfform</li>
+                        <li>Hervorhebung der aufrechten, spitzen Ohren</li>
+                        <li>Aktivierung bei bestimmten Fellmustern</li>
+                        <li>Kurzer oder fehlender Schwanz</li>
+                    </ul>
+                </div>
+                <div style="flex: 1;">
+                    <h3 style="font-size: 0.9em;">Cardigan Welsh Corgi</h3>
+                    <ul>
+                        <li>Deutliche Aktivierung am langen Schwanz</li>
+                        <li>Hervorhebung der größeren, runderen Ohren</li>
+                        <li>Fokus auf breiteren Körperbau</li>
+                        <li>Activation bei dunkleren Fellfarben</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Anwendungsfall: Mischling-Erkennung</h2>
             <ul>
-                <li><strong>Grad-CAM:</strong> Einfach zu verstehen, da visuelle Heatmaps erzeugt werden. Geeignet für Laien.</li>
-                <li><strong>LRP:</strong> Liefert detaillierte Erklärungen auf Pixelebene, aber erfordert Expertenwissen zur Interpretation.</li>
+                <li>Experiment: Bewertung von Mischlings-Bildern beider Rassen</li>
+                <li>Beobachtung: Konfidenz des Modells sinkt bei gemischten Merkmalen (oft unter 75%)</li>
+                <li>GradCAM: aktiviert Regionen beider Rassen gleichzeitig</li>
+                <li>LRP: zeigt konfliktäre Pixel-Aktivierungen für beide Klassen</li>
+                <li>XAI ermöglicht transparenten Einblick in Modell-Unsicherheit</li>
+                <li>Ermöglicht besseres Verständnis von Entscheidungsgrenzen im Modell</li>
             </ul>
         </section>
 
         <section>
-            <h2>Vergleich XAI-Methoden: Modellabhängigkeit</h2>
+            <h2>Anwendungsfall: Mischling-Erkennung (Beispiel)</h2>
+            <div style="display: flex; align-items: center;">
+                <img src="./images/niko-royalty-free-image-1726720063.png" alt="Beispielbild_Corgi" style="width:35%; margin-right: 15px;">
+                <div>
+                    <p style="font-size: 0.8em;">
+                        <strong>Fallbeispiel Mischling:</strong> Die XAI-Visualisierungen zeigen gemischte Merkmale:
+                    </p>
+                    <ul style="font-size: 0.8em;">
+                        <li>Pembroke-typische Züge: Fuchsartige Kopfform, aufrechte Ohren, helleres Fell</li>
+                        <li>Cardigan-typische Züge: Breiterer Körperbau, längerer Schwanz</li>
+                        <li>GradCAM zeigt aktivierte Zonen in beiden typischen Merkmalsbereichen</li>
+                        <li>LRP offenbart widersprüchliche Pixelmuster, was die geringere Vorhersagekonfidenz erklärt</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Kritische Betrachtung der XAI-Methoden</h2>
             <ul>
-                <li><strong>Grad-CAM:</strong> Funktioniert nur mit CNNs, da es Gradienten der Convolutional Layer nutzt.</li>
-                <li><strong>LRP:</strong> Bedingt modellabhängig, kann auf verschiedene Architekturen angewendet werden, aber erfordert spezifische Anpassungen.</li>
+                <li>XAI-Visualisierungen bieten Erklärungen, aber keine kausalen Zusammenhänge</li>
+                <li>Subjektivität in der Interpretation der Visualisierungen</li>
+                <li>GradCAM: Fokus auf letzte Layer könnte wichtige frühe Features übersehen</li>
+                <li>LRP: Höhere Komplexität erschwert intuitive Interpretation</li>
+                <li>Beide Methoden benötigen Expertenwissen zur vollständigen Ausschöpfung</li>
+                <li>Balance zwischen Erklärbarkeit und technischer Tiefe ist herausfordernd</li>
             </ul>
         </section>
 
         <section>
-            <h2>Vergleich XAI-Methoden: Genauigkeit & Konsistenz</h2>
+            <h1>Analyse & Kritische Diskussion</h1>
+        </section>
+
+        <section>
+            <h2>Stärken & Grenzen des Ansatzes</h2>
             <ul>
-                <li><strong>Grad-CAM:</strong> Liefert grobe Erklärungen, die für viele Inputs konsistent sind, aber weniger präzise.</li>
-                <li><strong>LRP:</strong> Sehr präzise auf Pixelebene, aber die Ergebnisse können bei kleinen Änderungen im Input variieren.</li>
+                <li><strong>Stärken:</strong>
+                    <ul>
+                        <li>Hohe Klassifikationsgenauigkeit (>90%)</li>
+                        <li>Transparente Entscheidungsprozesse durch XAI</li>
+                        <li>Effiziente Nutzung von Transfer Learning</li>
+                    </ul>
+                </li>
+                <li><strong>Grenzen:</strong>
+                    <ul>
+                        <li>Eingeschränkte Generalisierbarkeit bei untypischen Bildaufnahmen</li>
+                        <li>Abhängigkeit von der Qualität des Trainingsdatensatzes</li>
+                        <li>Interpretationsaufwand bei XAI-Methoden</li>
+                    </ul>
+                </li>
             </ul>
         </section>
 
         <section>
-            <h2>Vergleich XAI-Methoden: Berechnungskosten</h2>
+            <h2>Zusammenfassung der XAI-Erkenntnisse</h2>
             <ul>
-                <li><strong>Grad-CAM:</strong> Geringer Rechenaufwand, geeignet für große Datensätze und Echtzeitanwendungen.</li>
-                <li><strong>LRP:</strong> Hoher Rechenaufwand, besonders bei tiefen Netzwerken und großen Datensätzen.</li>
-            </ul>
-        </section>
-
-        <section>
-            <h2>Vergleich XAI-Methoden: Anwendungsszenarien</h2>
-            <ul>
-                <li><strong>Grad-CAM:</strong> Ideal für schnelle visuelle Analysen, z. B. in der medizinischen Bildverarbeitung.</li>
-                <li><strong>LRP:</strong> Geeignet für detaillierte Analysen, z. B. in der Forschung oder bei sicherheitskritischen Anwendungen.</li>
+                <li>Beide XAI-Methoden zeigen, dass das Modell tatsächlich die rassetypischen Merkmale erkennt</li>
+                <li>Rasseunterschiede werden primär anhand anatomischer Features erkannt:
+                    <ul>
+                        <li>Schwanz (lang vs. kurz/fehlend)</li>
+                        <li>Ohren (groß/rund vs. spitz/aufrecht)</li>
+                        <li>Körperbau (breiter vs. schlanker)</li>
+                    </ul>
+                </li>
+                <li>Bei Mischlingen: XAI offenbart die "Unsicherheit" des Modells visuell</li>
+                <li>Direkter Vergleich zeigt komplementäre Stärken der Methoden: GradCAM (Übersicht) und LRP (Detail)</li>
             </ul>
         </section>
 
@@ -328,7 +499,11 @@
 
         <section>
             <h2>Vergleich XAI-Methoden: Ergebnisse</h2>
-            <img src="images/ExAI-GradCAM_vs_LRP.png" alt="LRP-Visual" style="width: 45%; display: block; margin: 0 auto;" />
+            <img src="images/ExAI-GradCAM_vs_LRP.png" alt="LRP-Visual" style="width:45%; display: block; margin: 0 auto;" />
+            <p style="font-size: 0.8em; text-align: center;">
+                Direkter Vergleich: GradCAM (links) zeigt grobe Fokusregionen, während LRP (rechts) 
+                pixelgenaue Merkmalszuordnung ermöglicht.
+            </p>
         </section>
 
         <section>
@@ -337,46 +512,13 @@
         </section>
 
         <section>
-            <h1>Analyse & Kritische Diskussion</h1>
-        </section>
-
-<!--        <section>-->
-<!--            <h2>Vergleich der Methoden</h2>-->
-<!--            <img src="images/comparison.png" alt="Vergleich" style="width:80%">-->
-<!--            <p>Links: Original, Mitte: Grad-CAM, Rechts: LRP</p>-->
-<!--        </section>-->
-
-
-
-        
-
-<!--        <section>-->
-<!--            <h2>Contrastive Analysis</h2>-->
-<!--            <ul>-->
-<!--                <li>Vergleich der relevanten Merkmale für beide Klassen</li>-->
-<!--                <li>Hervorhebung der unterscheidenden Features</li>-->
-<!--                <li>Besonders wichtig bei ähnlichen Klassen wie Pembroke/Cardigan</li>-->
-<!--            </ul>-->
-<!--            <img src="images/contrastive_example.png" alt="Contrastive Analysis" style="width:60%">-->
-<!--        </section>-->
-
-        <section>
-            <h2>Anwendungsfall: Mischling-Erkennung - TODO, Überfällig?</h2>
+            <h2>Praktische Anwendungsfälle</h2>
             <ul>
-                <li>Bei Mischlingen zeigen beide Methoden überlappende Merkmale</li>
-                <li>Unsicherheit des Modells korreliert mit Stärke der Merkmale</li>
-                <li>XAI-Methoden zeigen Entscheidungsprozess transparent auf</li>
-            </ul>
-        </section>
-
-        <section>
-            <h2>Diskussion & Fazit</h2>
-            <ul>
-                <li>Modell liefert gute Ergebnisse für klar trennbare Klassen</li>
-                <li>XAI-Methoden verdeutlichen die Entscheidungskriterien des Modells</li>
-                <li>Grad-CAM: guter Überblick über relevante Regionen</li>
-                <li>LRP: detailliertere Analyse auf Pixelebene</li>
-<!--                <li>Kombination beider Methoden liefert umfassendes Verständnis</li>-->
+                <li><strong>Tiermedizinische Diagnose:</strong> Identifikation von Anomalien in Tierbildern</li>
+                <li><strong>Zuchtanalyse:</strong> Objektive Bewertung von Rassemerkmalen</li>
+                <li><strong>Bildsuche:</strong> Verbesserung von Suchergebnissen durch merkmalsbasierte Ähnlichkeiten</li>
+                <li><strong>Qualitätssicherung:</strong> Überprüfung der Modellentscheidungen in sicherheitskritischen Anwendungen</li>
+                <li><strong>Bildungsbereich:</strong> Visuelle Darstellung von Merkmalsunterschieden für Lernzwecke</li>
             </ul>
         </section>
 
