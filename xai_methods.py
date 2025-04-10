@@ -11,30 +11,9 @@ import torch.nn as nn
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-# ============================================================================
-# Section 10: GradCAM Implementation
-# ============================================================================
-
 
 class GradCAM:
-    """
-    GradCAM implementation for CNN visualization.
-
-    This class implements the Gradient-weighted Class Activation Mapping (Grad-CAM)
-    technique to visualize which parts of an image are important for a CNN's prediction.
-
-    Reference: Selvaraju et al., "Grad-CAM: Visual Explanations from Deep Networks via
-    Gradient-based Localization", https://arxiv.org/abs/1610.02391
-    """
-
     def __init__(self, model, target_layer):
-        """
-        Initializes GradCAM with a model and target layer
-
-        Args:
-            model: The trained PyTorch model
-            target_layer: The convolutional layer to use for generating the CAM
-        """
         self.model = model
         self.target_layer = target_layer
         self.hooks = []
@@ -44,8 +23,6 @@ class GradCAM:
         self.model.eval()
 
     def register_hooks(self):
-        """Registers forward and backward hooks to the target layer"""
-
         def forward_hook(module, input, output):
             self.activations = output.detach()
 
@@ -60,21 +37,10 @@ class GradCAM:
         self.hooks = [forward_handle, backward_handle]
 
     def remove_hooks(self):
-        """Removes all registered hooks"""
         for hook in self.hooks:
             hook.remove()
 
     def __call__(self, input_tensor, target_class=None):
-        """
-        Generates the Grad-CAM for the input tensor
-
-        Args:
-            input_tensor: Input image (must be normalized the same way as training data)
-            target_class: Target class index. If None, uses the predicted class.
-
-        Returns:
-            cam: The normalized Grad-CAM heatmap
-        """
         # Forward pass
         input_tensor = input_tensor.to(device)
 
@@ -119,20 +85,6 @@ class GradCAM:
 
 
 def apply_gradcam(model, img_tensor, img_np, target_class=None, layer_name="layer4"):
-    """
-    Applies GradCAM to visualize model attention
-
-    Args:
-        model: Trained PyTorch model
-        img_tensor: Input image tensor (1, C, H, W)
-        img_np: Original numpy image for visualization (RGB)
-        target_class: Target class for visualization
-        layer_name: Name of layer to use for GradCAM (default: 'layer4')
-
-    Returns:
-        visualization: Heatmap overlaid on original image
-        cam: Raw heatmap
-    """
     # Get the target layer
     target_layer = model.layer4
 
@@ -163,15 +115,6 @@ def apply_gradcam(model, img_tensor, img_np, target_class=None, layer_name="laye
 
 
 def visualize_gradcam(model, dataloader, class_names, num_images=5):
-    """
-    Visualizes GradCAM for a batch of images
-
-    Args:
-        model: Trained PyTorch model
-        dataloader: DataLoader containing images to visualize
-        class_names: Names of the classes
-        num_images: Number of images to visualize
-    """
     # Set model to evaluation mode
     model.eval()
 
@@ -229,42 +172,13 @@ def visualize_gradcam(model, dataloader, class_names, num_images=5):
     plt.show()
 
 
-# ============================================================================
-# Section 11: Layer-wise Relevance Propagation (LRP) Implementation
-# ============================================================================
-
-
 class LRP:
-    """
-    Simplified Layer-wise Relevance Propagation (LRP) for CNN visualization.
-    
-    This implementation uses a simpler gradient-based approach that avoids
-    the issues with tensor views and in-place modifications.
-    """
-    
     def __init__(self, model, epsilon=1e-9):
-        """
-        Initializes LRP with a model
-        
-        Args:
-            model: The trained PyTorch model (ResNet50)
-            epsilon: Small constant for numerical stability
-        """
         self.model = model
         self.epsilon = epsilon
         self.model.eval()
     
     def __call__(self, input_tensor, target_class=None):
-        """
-        Generates the LRP heatmap for the input tensor using a simplified approach
-        
-        Args:
-            input_tensor: Input image tensor (must be normalized)
-            target_class: Target class index. If None, uses the predicted class.
-            
-        Returns:
-            relevance_map: The normalized LRP heatmap
-        """
         # Make a detached copy of the input that requires gradient
         input_copy = input_tensor.clone().detach().to(device)
         input_copy.requires_grad = True
@@ -300,19 +214,6 @@ class LRP:
         return relevance.detach().cpu().numpy()
 
 def apply_lrp(model, img_tensor, img_np, target_class=None):
-    """
-    Applies simplified LRP to visualize model contributions
-    
-    Args:
-        model: Trained PyTorch model
-        img_tensor: Input image tensor (1, C, H, W)
-        img_np: Original numpy image for visualization (RGB)
-        target_class: Target class for visualization
-        
-    Returns:
-        visualization: Heatmap overlaid on original image
-        relevance_map: Raw relevance map
-    """
     # Create LRP instance
     lrp = LRP(model)
     
@@ -350,15 +251,6 @@ def apply_lrp(model, img_tensor, img_np, target_class=None):
 
 
 def visualize_lrp(model, dataloader, class_names, num_images=5):
-    """
-    Visualizes LRP for a batch of images
-
-    Args:
-        model: Trained PyTorch model
-        dataloader: DataLoader containing images to visualize
-        class_names: Names of the classes
-        num_images: Number of images to visualize
-    """
     # TODO: Display LRP per Layer
     # Set model to evaluation mode
     model.eval()
@@ -417,21 +309,7 @@ def visualize_lrp(model, dataloader, class_names, num_images=5):
     plt.show()
 
 
-# ============================================================================
-# Section 12: XAI Methods Comparison
-# ============================================================================
-
-
 def compare_xai_methods(model, dataloader, class_names, num_images=3):
-    """
-    Visually compares different XAI methods on the same images
-
-    Args:
-        model: Trained PyTorch model
-        dataloader: DataLoader containing images to visualize
-        class_names: Names of the classes
-        num_images: Number of images to visualize
-    """
     # Set model to evaluation mode
     model.eval()
 
@@ -520,16 +398,6 @@ def compare_xai_methods(model, dataloader, class_names, num_images=3):
     print("    which visual traits the model is using to distinguish between classes.")
 
 def compare_gradcam_classes(model, dataloader, class_names, num_images=1):
-    """
-    Compares GradCAM visualizations for different classes (Pembroke vs Cardigan)
-    on the same image.
-    
-    Args:
-        model: Trained PyTorch model
-        dataloader: DataLoader containing images to visualize
-        class_names: Names of the classes (expecting Pembroke and Cardigan)
-        num_images: Number of images to visualize
-    """
     # Set model to evaluation mode
     model.eval()
     
@@ -606,16 +474,6 @@ def compare_gradcam_classes(model, dataloader, class_names, num_images=1):
     plt.show()
 
 def compare_lrp_classes(model, dataloader, class_names, num_images=1):
-    """
-    Compares LRP visualizations for different classes (Pembroke vs Cardigan)
-    on the same image.
-    
-    Args:
-        model: Trained PyTorch model
-        dataloader: DataLoader containing images to visualize
-        class_names: Names of the classes (expecting Pembroke and Cardigan)
-        num_images: Number of images to visualize
-    """
     # Set model to evaluation mode
     model.eval()
     

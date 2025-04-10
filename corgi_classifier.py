@@ -2,7 +2,8 @@
 # start with ".venv/bin/python corgi_classifier.py"
 
 # Path to the specific image
-demo_image_path = "./assets/corgi-mischling.jpeg"
+demo_mischling = "./assets/corgi-mischling.jpeg"
+demo_pembroke = "./assets/corgi-pembroke.jpeg"
 ###############################################################################
 
 import os
@@ -465,6 +466,58 @@ class SingleImageDataset(Dataset):
             blank_image = torch.zeros((3, 224, 224)) if self.transform else Image.new('RGB', (224, 224), (0, 0, 0))
             return blank_image, -1
 
+def apply_xai_to_trained_model(model, val_loader, class_names, num_images=5):
+    """Apply different XAI methods to the trained model for interpretability"""
+    print("\n" + "="*50)
+    print("Applying XAI Methods for Model Interpretability")
+    print("="*50)
+
+    print("\nGenerating GradCAM visualizations...")
+    visualize_gradcam(model, val_loader, class_names, num_images=num_images)
+
+    print("\nGenerating Layer-wise Relevance Propagation visualizations...")
+    visualize_lrp(model, val_loader, class_names, num_images=num_images)
+
+    print("\nComparing GradCAM and LRP methods...")
+    compare_xai_methods(model, val_loader, class_names, num_images=3)
+
+    print("\nXAI visualization complete. All results saved as PNG files.")
+
+def analyze_demo_images(model, class_names):
+    print("\nLoading manual images for inference...")
+    manual_transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+
+    # First analyze the Pembroke image
+    print(f"\nAnalyzing Pembroke demo image: {demo_pembroke}")
+    pembroke_dataset = SingleImageDataset(demo_pembroke, transform=manual_transform)
+    pembroke_loader = DataLoader(pembroke_dataset, batch_size=1, shuffle=False)
+
+    print("Applying XAI methods to Pembroke image:")
+    compare_xai_methods(model, pembroke_loader, class_names, num_images=1)
+    
+    print("Comparing GradCAM for different classes on Pembroke image:")
+    compare_gradcam_classes(model, pembroke_loader, class_names, num_images=1)
+    
+    print("Comparing LRP for different classes on Pembroke image:")
+    compare_lrp_classes(model, pembroke_loader, class_names, num_images=1)
+
+    # Then analyze the mixed-breed image
+    print(f"\nAnalyzing mixed-breed demo image: {demo_mischling}")
+    mischling_dataset = SingleImageDataset(demo_mischling, transform=manual_transform)
+    mischling_loader = DataLoader(mischling_dataset, batch_size=1, shuffle=False)
+
+    print("Applying XAI methods to mixed-breed image:")
+    compare_xai_methods(model, mischling_loader, class_names, num_images=1)
+    
+    print("Comparing GradCAM for different classes on mixed-breed image:")
+    compare_gradcam_classes(model, mischling_loader, class_names, num_images=1)
+    
+    print("Comparing LRP for different classes on mixed-breed image:")
+    compare_lrp_classes(model, mischling_loader, class_names, num_images=1)
 
 def main():
     download_dir = "./downloads"
@@ -499,48 +552,11 @@ def main():
             history=history
         )
 
-        print("\n" + "="*50)
-        print("Applying XAI Methods for Model Interpretability")
-        print("="*50)
+        # Apply XAI methods to the trained model
+        apply_xai_to_trained_model(model, val_loader, class_names, num_images=images_to_apply_xai_on)
 
-        print("\nGenerating GradCAM visualizations...")
-        visualize_gradcam(model, val_loader, class_names, num_images=images_to_apply_xai_on)
-
-        print("\nGenerating Layer-wise Relevance Propagation visualizations...")
-        visualize_lrp(model, val_loader, class_names, num_images=images_to_apply_xai_on)
-
-        print("\nComparing GradCAM and LRP methods...")
-        compare_xai_methods(model, val_loader, class_names, num_images=3)
-
-        print("\nXAI visualization complete. All results saved as PNG files.")
-
-
-    # Visualize Manual Image 
-    # Create a manual loader for a specific image
-    print("\nLoading manual image for inference...")
-    print(f"Using demo image path defined at top of file: {demo_image_path}")
-    manual_transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ])
-
-    # Create dataset and loader for the single image
-    manual_dataset = SingleImageDataset(demo_image_path, transform=manual_transform)
-    manual_loader = DataLoader(manual_dataset, batch_size=1, shuffle=False)
-
-    print(f"Applying XAI methods to analyze: {demo_image_path}")
-    compare_xai_methods(model, manual_loader, class_names, num_images=1)
-    
-    # Compare GradCAM for Pembroke vs Cardigan on the mixed-breed image
-    print("\nComparing GradCAM for Pembroke vs Cardigan classes on the mixed-breed image...")
-    print(f"Image being analyzed: {demo_image_path}")
-    compare_gradcam_classes(model, manual_loader, class_names, num_images=1)
-    
-    # Compare LRP for Pembroke vs Cardigan on the mixed-breed image
-    print("\nComparing LRP for Pembroke vs Cardigan classes on the mixed-breed image...")
-    print(f"Image being analyzed: {demo_image_path}")
-    compare_lrp_classes(model, manual_loader, class_names, num_images=1)
+    # Analyze demo images using XAI methods
+    analyze_demo_images(model, class_names)
 
 if __name__ == "__main__":
     main()
