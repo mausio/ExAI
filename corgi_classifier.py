@@ -1,10 +1,4 @@
-###############################################################################
-# start with ".venv/bin/python corgi_classifier.py"
-
-# Path to the specific image
-demo_mischling = "./assets/corgi-mischling.jpeg"
-demo_pembroke = "./assets/corgi-pembroke.jpeg"
-###############################################################################
+#!./venv/bin/python
 
 import os
 import time
@@ -27,9 +21,14 @@ from sklearn.metrics import confusion_matrix, classification_report
 
 from xai_methods import visualize_gradcam, visualize_lrp, compare_xai_methods, compare_gradcam_classes, compare_lrp_classes
 
+# Path to specific images
+DEMO_MISCHLING = "./assets/corgi-mischling.jpeg"
+# DEMO_MISCHLING = "./assets/corgi-mischling-2.jpeg"
+
+DEMO_PEMBROKE = "./assets/corgi-pembroke.jpeg"
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
-
 
 def download_and_extract_dataset(download_dir, extract_dir):
     os.makedirs(download_dir, exist_ok=True)
@@ -314,7 +313,7 @@ def train_model(model, train_loader, val_loader, num_epochs=5, patience=5):
     return model, history
 
 def evaluate_model(model, dataloader, class_names):
-    model.eval()
+    model.eval()  # by first setting it to evaluation mode..
     y_true = []
     y_pred = []
     
@@ -467,9 +466,9 @@ class SingleImageDataset(Dataset):
             return blank_image, -1
 
 def apply_xai_to_trained_model(model, val_loader, class_names, num_images=5):
-    """Apply different XAI methods to the trained model for interpretability"""
+    """Apply XAI methods GradCAM and LRP to trained model"""
     print("\n" + "="*50)
-    print("Applying XAI Methods for Model Interpretability")
+    print("Applying XAI Methods..")
     print("="*50)
 
     print("\nGenerating GradCAM visualizations...")
@@ -491,9 +490,8 @@ def analyze_demo_images(model, class_names):
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
-    # First analyze the Pembroke image
-    print(f"\nAnalyzing Pembroke demo image: {demo_pembroke}")
-    pembroke_dataset = SingleImageDataset(demo_pembroke, transform=manual_transform)
+    print(f"\nAnalyzing Pembroke demo image: {DEMO_PEMBROKE}")
+    pembroke_dataset = SingleImageDataset(DEMO_PEMBROKE, transform=manual_transform)
     pembroke_loader = DataLoader(pembroke_dataset, batch_size=1, shuffle=False)
 
     print("Applying XAI methods to Pembroke image:")
@@ -506,8 +504,8 @@ def analyze_demo_images(model, class_names):
     compare_lrp_classes(model, pembroke_loader, class_names, num_images=1)
 
     # Then analyze the mixed-breed image
-    print(f"\nAnalyzing mixed-breed demo image: {demo_mischling}")
-    mischling_dataset = SingleImageDataset(demo_mischling, transform=manual_transform)
+    print(f"\nAnalyzing mixed-breed demo image: {DEMO_MISCHLING}")
+    mischling_dataset = SingleImageDataset(DEMO_MISCHLING, transform=manual_transform)
     mischling_loader = DataLoader(mischling_dataset, batch_size=1, shuffle=False)
 
     print("Applying XAI methods to mixed-breed image:")
@@ -543,6 +541,7 @@ def main():
         
         plot_training_history(history)
         
+        # Create confusion matrix and classification report
         y_true, y_pred, report = evaluate_model(model, val_loader, class_names)
         
         save_model(
@@ -552,10 +551,11 @@ def main():
             history=history
         )
 
-        # Apply XAI methods to the trained model
+        # Does show multiple test-cases after training,
+        # but is not that important for xAI.
+        # If interested, just push back one <ident.
         apply_xai_to_trained_model(model, val_loader, class_names, num_images=images_to_apply_xai_on)
 
-    # Analyze demo images using XAI methods
     analyze_demo_images(model, class_names)
 
 if __name__ == "__main__":
