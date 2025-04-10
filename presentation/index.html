@@ -244,15 +244,15 @@
             <h2>Grad-CAM: Technische Details</h2>
             <ul>
                 <li>Verwendet Gradienten der letzten Convolutional Layer</li>
+                <li>Target Layer: layer4 von ResNet50</li>
                 <li>Berechnet gewichtete Aktivierungskarten</li>
                 <li>Implementierung mit PyTorch Hooks für Forward/Backward Pass</li>
-                <li>Target Layer: layer4 von ResNet50</li>
             </ul>
         </section>
 
         <section>
             <h2>Code-Snippet: Grad-CAM</h2>
-            <h3>Teil 1: Forward Pass & Gradient-Berechnung</h3>
+            <h3>Teil 1: Forward Pass & Backward Pass</h3>
             <pre><code class="language-python" style="font-size: 0.7em; max-height: 350px;">
 def __call__(self, input_tensor, target_class=None):
     # Forward pass
@@ -303,21 +303,11 @@ def __call__(self, input_tensor, target_class=None):
                 <img src="images/GradCAM-Beispiele.png" alt="Grad-CAM-Visual" style="width: 20%; margin-right: 20px; align-self: flex-start;" />
                     <ul style="font-size: 0.85em; align-self: flex-start;">
                         <li>Rote/gelbe Bereiche zeigen Hauptaufmerksamkeit des Modells</li>
-                        <li>Bei Pembroke: Aktivierung im Kopf- und Halsbereich, typisch für die kürzere Statur</li>
-                        <li>Bei Cardigan: Verstärkte Aktivierung im Schwanzbereich und größeren Ohren</li>
+                        <li>Bei Pembroke: Fokus auf Kopfform, Ohren und kurzen Schwanz</li>
+                        <li>Bei Cardigan: Fokus auf größere Ohren und längeren Schwanz</li>
                         <li>Unterschiedliche Färbungsmuster beeinflussen Entscheidungsfindung</li>
                     </ul>
               </div>
-        </section>
-
-        <section>
-            <h2>Visualisierung: Grad-CAM</h2>
-            <ul>
-                <li>Hervorhebung entscheidungsrelevanter Bildregionen</li>
-                <li>Bei Pembroke: Fokus auf Kopfform, Ohren und kurzen Schwanz</li>
-                <li>Bei Cardigan: Fokus auf größere Ohren und längeren Schwanz</li>
-                <li>Nutzung des letzten Convolutional Layers (layer4 von ResNet50)</li>
-            </ul>
         </section>
 
         <section>
@@ -325,14 +315,12 @@ def __call__(self, input_tensor, target_class=None):
             <ul>
                 <li>Propagiert Vorhersagen rückwärts durch das Netzwerk</li>
                 <li>Berechnet Beiträge jedes Pixels zum finalen Output</li>
-                <li>Relevanz-Regeln: Epsilon-Regel für Stabilität</li>
-                <li>Implementierung für Conv2D, Linear und Pooling Layer</li>
             </ul>
         </section>
 
         <section>
             <h2>Code-Snippet: LRP</h2>
-            <h3>Teil 1: Vorbereitung & Forward Pass</h3>
+            <h3>Teil 1: Forward Pass & Backward Pass</h3>
             <pre><code class="language-python" style="font-size: 0.7em; max-height: 350px;">
 def __call__(self, input_tensor, target_class=None):
     # Clone input tensor and enable gradient tracking
@@ -358,7 +346,7 @@ def __call__(self, input_tensor, target_class=None):
 
         <section>
             <h2>Code-Snippet: LRP</h2>
-            <h3>Teil 2: Relevanz-Berechnung & Normalisierung</h3>
+            <h3>Teil 2: Relevanz-Berechnung & Heatmap-Generierung</h3>
             <pre><code class="language-python" style="font-size: 0.7em; max-height: 350px;">
     # Get gradients with respect to input
     grad = input_copy.grad.clone()
@@ -392,7 +380,6 @@ def __call__(self, input_tensor, target_class=None):
                 <li>Subjektivität in der Interpretation der Visualisierungen</li>
                 <li>GradCAM: Fokus auf letzte Layer könnte wichtige frühe Features übersehen</li>
                 <li>LRP: Höhere Komplexität erschwert intuitive Interpretation</li>
-                <li>Beide Methoden benötigen Expertenwissen zur vollständigen Ausschöpfung</li>
                 <li>Balance zwischen Erklärbarkeit und technischer Tiefe ist herausfordernd</li>
             </ul>
         </section>
