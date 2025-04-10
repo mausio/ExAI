@@ -2,7 +2,7 @@
 # start with ".venv/bin/python corgi_classifier.py"
 
 # Path to the specific image
-demo_image_path = "./assets/corgi-mischling.jpg"
+demo_image_path = "./assets/corgi-mischling.jpeg"
 ###############################################################################
 
 import os
@@ -24,7 +24,7 @@ from torchvision.datasets.utils import download_url, extract_archive
 
 from sklearn.metrics import confusion_matrix, classification_report
 
-from xai_methods import visualize_gradcam, visualize_lrp, compare_xai_methods
+from xai_methods import visualize_gradcam, visualize_lrp, compare_xai_methods, compare_gradcam_classes
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
@@ -518,20 +518,25 @@ def main():
     # Visualize Manual Image 
     # Create a manual loader for a specific image
     print("\nLoading manual image for inference...")
+    print(f"Using demo image path defined at top of file: {demo_image_path}")
     manual_transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
-    # Path to the specific image
-
     # Create dataset and loader for the single image
     manual_dataset = SingleImageDataset(demo_image_path, transform=manual_transform)
     manual_loader = DataLoader(manual_dataset, batch_size=1, shuffle=False)
 
     print(f"Manual loader created for image: {demo_image_path}")
-    compare_xai_methods(model, manual_loader, class_names, num_images=3)
+    print(f"Applying XAI methods to analyze: {demo_image_path}")
+    compare_xai_methods(model, manual_loader, class_names, num_images=1)
+    
+    # Compare GradCAM for Pembroke vs Cardigan on the mixed-breed image
+    print("\nComparing GradCAM for Pembroke vs Cardigan classes on the mixed-breed image...")
+    print(f"Image being analyzed: {demo_image_path}")
+    compare_gradcam_classes(model, manual_loader, class_names, num_images=1)
 
 if __name__ == "__main__":
     main()
