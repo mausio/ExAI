@@ -1,3 +1,9 @@
+###############################################################################
+# start with ".venv/bin/python corgi_classifier.py"
+
+# Path to the specific image
+demo_image_path = "./assets/corgi-mischling.jpg"
+###############################################################################
 
 import os
 import time
@@ -22,6 +28,7 @@ from xai_methods import visualize_gradcam, visualize_lrp, compare_xai_methods
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
+
 
 def download_and_extract_dataset(download_dir, extract_dir):
     os.makedirs(download_dir, exist_ok=True)
@@ -427,6 +434,37 @@ def load_model(load_path, model=None):
     except Exception as e:
         print(f"Error loading model: {e}")
         return None, None
+    
+class SingleImageDataset(Dataset):
+    def __init__(self, image_path, transform=None):
+        """
+        Dataset for loading a single image without a label
+        
+        Args:
+            image_path: Path to the image file
+            transform: PyTorch transforms for preprocessing
+        """
+        self.image_path = image_path
+        self.transform = transform
+        
+    def __len__(self):
+        return 1  # Only one image
+        
+    def __getitem__(self, idx):
+        # Load image
+        try:
+            image = Image.open(self.image_path).convert('RGB')
+            
+            if self.transform:
+                image = self.transform(image)
+                
+            return image, -1  # -1 as a placeholder label since we don't have one
+        except Exception as e:
+            print(f"Error loading image {self.image_path}: {e}")
+            # Return a blank image
+            blank_image = torch.zeros((3, 224, 224)) if self.transform else Image.new('RGB', (224, 224), (0, 0, 0))
+            return blank_image, -1
+
 
 def main():
     download_dir = "./downloads"
@@ -461,20 +499,39 @@ def main():
             history=history
         )
 
-    print("\n" + "="*50)
-    print("Applying XAI Methods for Model Interpretability")
-    print("="*50)
+        print("\n" + "="*50)
+        print("Applying XAI Methods for Model Interpretability")
+        print("="*50)
 
-    print("\nGenerating GradCAM visualizations...")
-    visualize_gradcam(model, val_loader, class_names, num_images=images_to_apply_xai_on)
-    
-    print("\nGenerating Layer-wise Relevance Propagation visualizations...")
-    visualize_lrp(model, val_loader, class_names, num_images=images_to_apply_xai_on)
-    
-    print("\nComparing GradCAM and LRP methods...")
-    compare_xai_methods(model, val_loader, class_names, num_images=3)
-    
-    print("\nXAI visualization complete. All results saved as PNG files.")
+        print("\nGenerating GradCAM visualizations...")
+        visualize_gradcam(model, val_loader, class_names, num_images=images_to_apply_xai_on)
+
+        print("\nGenerating Layer-wise Relevance Propagation visualizations...")
+        visualize_lrp(model, val_loader, class_names, num_images=images_to_apply_xai_on)
+
+        print("\nComparing GradCAM and LRP methods...")
+        compare_xai_methods(model, val_loader, class_names, num_images=3)
+
+        print("\nXAI visualization complete. All results saved as PNG files.")
+
+
+    # Visualize Manual Image 
+    # Create a manual loader for a specific image
+    print("\nLoading manual image for inference...")
+    manual_transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+
+    # Path to the specific image
+
+    # Create dataset and loader for the single image
+    manual_dataset = SingleImageDataset(demo_image_path, transform=manual_transform)
+    manual_loader = DataLoader(manual_dataset, batch_size=1, shuffle=False)
+
+    print(f"Manual loader created for image: {demo_image_path}")
+    compare_xai_methods(model, manual_loader, class_names, num_images=3)
 
 if __name__ == "__main__":
     main()
