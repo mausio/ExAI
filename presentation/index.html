@@ -9,6 +9,8 @@
           href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.4.0/reveal.min.css">
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.4.0/theme/black.min.css">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.4.0/plugin/highlight/monokai.min.css">
     <style>
         .reveal h1, .reveal h2, .reveal h3 {
             text-transform: none;
@@ -85,12 +87,19 @@
 <div class="reveal">
     <div class="slides">
 
+        <!-- Robin: Einführung -->
+         
         <section class="title-slide">
             <h1>Explainable AI mit Bilddaten</h1>
             <h3>Unterscheidung von Pembroke und Cardigan Welsh Corgis</h3>
             <p>Lukas, Janik, Robin, Felix</p>
             <p><small>DHBW - ExAI Projekt</small></p>
         </section>
+
+        <section>
+            <h1>Robin: Einführung</h1>
+        </section>
+
 
         <section>
             <h1>Agenda</h1>
@@ -110,7 +119,7 @@
 
         <section>
             <h2>Problemstellung</h2>
-            <p>Unterscheidung der Corgi-Rassen <strong>Pembroke</strong> und <strong>Cardigan</strong> mit Hilfe eines CNN.</p>
+            <p>Unterscheidung der Corgi-Rassen <strong>Pembroke</strong> und <strong>Cardigan</strong> bei Mischlingen mit Hilfe eines CNN.</p>
         </section>
 
         <section>
@@ -146,7 +155,6 @@
                     </ul>
                 </li>
                 <li>Für Validierungsdaten: nur Resize und Normalisierung</li>
-                <li>Normalisierung mit ImageNet-Mittelwerten: [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]</li>
             </ul>
         </section>
 
@@ -216,8 +224,10 @@
             </ul>
         </section>
 
+        <!-- Janik: XAI Verfahren -->
+
         <section>
-            <h1>XAI Verfahren</h1>
+            <h1>Janik:XAI Verfahren</h1>
         </section>
 
         <section>
@@ -243,7 +253,7 @@
         <section>
             <h2>Code-Snippet: Grad-CAM</h2>
             <h3>Teil 1: Forward Pass & Gradient-Berechnung</h3>
-            <pre><code class="python" style="font-size: 0.7em; max-height: 350px;">
+            <pre><code class="language-python" style="font-size: 0.7em; max-height: 350px;">
 def __call__(self, input_tensor, target_class=None):
     # Forward pass
     input_tensor = input_tensor.to(device)
@@ -268,7 +278,7 @@ def __call__(self, input_tensor, target_class=None):
         <section>
             <h2>Code-Snippet: Grad-CAM</h2>
             <h3>Teil 2: Aktivierungs-Gewichtung & Heatmap-Generierung</h3>
-            <pre><code class="python" style="font-size: 0.7em; max-height: 350px;">
+            <pre><code class="language-python" style="font-size: 0.7em; max-height: 350px;">
     # Weight the activations by gradients
     pooled_gradients = torch.mean(self.gradients, dim=[0, 2, 3])
     for i in range(pooled_gradients.shape[0]):
@@ -323,7 +333,7 @@ def __call__(self, input_tensor, target_class=None):
         <section>
             <h2>Code-Snippet: LRP</h2>
             <h3>Teil 1: Vorbereitung & Forward Pass</h3>
-            <pre><code class="python" style="font-size: 0.7em; max-height: 350px;">
+            <pre><code class="language-python" style="font-size: 0.7em; max-height: 350px;">
 def __call__(self, input_tensor, target_class=None):
     # Clone input tensor and enable gradient tracking
     input_copy = input_tensor.clone().detach().to(device)
@@ -349,7 +359,7 @@ def __call__(self, input_tensor, target_class=None):
         <section>
             <h2>Code-Snippet: LRP</h2>
             <h3>Teil 2: Relevanz-Berechnung & Normalisierung</h3>
-            <pre><code class="python" style="font-size: 0.7em; max-height: 350px;">
+            <pre><code class="language-python" style="font-size: 0.7em; max-height: 350px;">
     # Get gradients with respect to input
     grad = input_copy.grad.clone()
     
@@ -373,6 +383,26 @@ def __call__(self, input_tensor, target_class=None):
                     Detaillierte Pixel-Relevanzverteilung zur finalen Entscheidung
                 </p>
               </div>
+        </section>
+
+        <section>
+            <h2>Kritische Betrachtung der XAI-Methoden</h2>
+            <ul>
+                <li>XAI-Visualisierungen bieten Erklärungen, aber keine kausalen Zusammenhänge</li>
+                <li>Subjektivität in der Interpretation der Visualisierungen</li>
+                <li>GradCAM: Fokus auf letzte Layer könnte wichtige frühe Features übersehen</li>
+                <li>LRP: Höhere Komplexität erschwert intuitive Interpretation</li>
+                <li>Beide Methoden benötigen Expertenwissen zur vollständigen Ausschöpfung</li>
+                <li>Balance zwischen Erklärbarkeit und technischer Tiefe ist herausfordernd</li>
+            </ul>
+        </section>
+
+
+        <!-- Felix: Demo zu Mischlingen vs Reinrassen -->
+
+        <section>
+            <h1>Felix:Demo zu Mischlingen vs Reinrassen</h1>
+            <h4>Live-Demo</h4>
         </section>
 
         <section>
@@ -411,7 +441,7 @@ def __call__(self, input_tensor, target_class=None):
             </ul>
         </section>
 
-        <section>
+        <!-- <section>
             <h2>Anwendungsfall: Mischling-Erkennung (Beispiel)</h2>
             <div style="display: flex; align-items: center;">
                 <img src="./images/niko-royalty-free-image-1726720063.png" alt="Beispielbild_Corgi" style="width:35%; margin-right: 15px;">
@@ -427,22 +457,13 @@ def __call__(self, input_tensor, target_class=None):
                     </ul>
                 </div>
             </div>
-        </section>
+        </section> -->
+
+
+                <!-- Lukas: Kritische Betrachtung der XAI-Methoden -->
 
         <section>
-            <h2>Kritische Betrachtung der XAI-Methoden</h2>
-            <ul>
-                <li>XAI-Visualisierungen bieten Erklärungen, aber keine kausalen Zusammenhänge</li>
-                <li>Subjektivität in der Interpretation der Visualisierungen</li>
-                <li>GradCAM: Fokus auf letzte Layer könnte wichtige frühe Features übersehen</li>
-                <li>LRP: Höhere Komplexität erschwert intuitive Interpretation</li>
-                <li>Beide Methoden benötigen Expertenwissen zur vollständigen Ausschöpfung</li>
-                <li>Balance zwischen Erklärbarkeit und technischer Tiefe ist herausfordernd</li>
-            </ul>
-        </section>
-
-        <section>
-            <h1>Analyse & Kritische Diskussion</h1>
+            <h1>Lukas: Analyse & Kritische Diskussion</h1>
         </section>
 
         <section>
@@ -507,11 +528,6 @@ def __call__(self, input_tensor, target_class=None):
         </section>
 
         <section>
-            <h1>Notebook</h1>
-            <h4>Live-Demo</h4>
-        </section>
-
-        <section>
             <h2>Praktische Anwendungsfälle</h2>
             <ul>
                 <li><strong>Tiermedizinische Diagnose:</strong> Identifikation von Anomalien in Tierbildern</li>
@@ -533,6 +549,17 @@ def __call__(self, input_tensor, target_class=None):
         </section>
 
         <section>
+            <h2>Beantwortung unserer Fragestellung</h2>
+            <ul>
+                <li>Konnten wir Pembroke und Cardigan Corgis mit unserem CNN unterscheiden?</li>
+                <li>Wie hat sich das Modell bei Mischlingen verhalten?</li>
+                <li>Haben die XAI-Methoden uns geholfen zu verstehen, wie das Modell entscheidet?</li>
+                <li>Welche Rassemerkmale waren am wichtigsten für die Klassifikation?</li>
+                <li>Ist unser Ansatz für ähnliche Probleme anwendbar?</li>
+            </ul>
+        </section>
+
+        <section>
             <h2>Vielen Dank!</h2>
             <h3>Fragen?</h3>
             <p><small>Projektteam: Lukas, Janik, Robin, Felix</small></p>
@@ -542,14 +569,16 @@ def __call__(self, input_tensor, target_class=None):
     </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.4.0/reveal.min.js"></script>
-<script src="dist/reveal.js"></script>
-<script src="plugin/notes/notes.js"></script>
-<script src="plugin/markdown/markdown.js"></script>
-<script src="plugin/highlight/highlight.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.4.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.4.0/plugin/markdown/markdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.4.0/plugin/highlight/highlight.min.js"></script>
 <script>
     Reveal.initialize({
         hash: true,
-        plugins: [RevealMarkdown, RevealHighlight, RevealNotes]
+        plugins: [RevealMarkdown, RevealHighlight, RevealNotes],
+        highlight: {
+            highlightOnLoad: true
+        }
     });
 </script>
 </body>
