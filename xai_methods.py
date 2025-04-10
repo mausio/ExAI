@@ -604,3 +604,89 @@ def compare_gradcam_classes(model, dataloader, class_names, num_images=1):
     plt.tight_layout()
     plt.savefig("gradcam_class_comparison.png")
     plt.show()
+
+def compare_lrp_classes(model, dataloader, class_names, num_images=1):
+    """
+    Compares LRP visualizations for different classes (Pembroke vs Cardigan)
+    on the same image.
+    
+    Args:
+        model: Trained PyTorch model
+        dataloader: DataLoader containing images to visualize
+        class_names: Names of the classes (expecting Pembroke and Cardigan)
+        num_images: Number of images to visualize
+    """
+    # Set model to evaluation mode
+    model.eval()
+    
+    # Get a batch of images
+    images, labels = next(iter(dataloader))
+    images = images[:num_images]
+    labels = labels[:num_images]
+    
+    # Verify we have both classes in class_names
+    if 'Pembroke' not in class_names or 'Cardigan' not in class_names:
+        print("Error: Class names must include both 'Pembroke' and 'Cardigan'")
+        return
+    
+    pembroke_idx = class_names.index('Pembroke')
+    cardigan_idx = class_names.index('Cardigan')
+    
+    # Create a figure
+    fig, axes = plt.subplots(num_images, 3, figsize=(15, 5 * num_images))
+    
+    for i, (image, label) in enumerate(zip(images, labels)):
+        # Convert to numpy image for display
+        img_np = image.cpu().numpy().transpose(1, 2, 0)
+        img_np = np.clip(
+            img_np * np.array([0.229, 0.224, 0.225]) + np.array([0.485, 0.456, 0.406]),
+            0,
+            1,
+        )
+        
+        # Prepare input for model
+        input_tensor = image.unsqueeze(0).to(device)
+        
+        # Get model prediction
+        with torch.no_grad():
+            output = model(input_tensor)
+            _, pred = torch.max(output, 1)
+            prob = torch.nn.functional.softmax(output, dim=1)
+            
+            # Get probabilities for each class
+            pembroke_prob = prob[0][pembroke_idx].item()
+            cardigan_prob = prob[0][cardigan_idx].item()
+        
+        # Generate LRP for Pembroke class
+        pembroke_lrp, _ = apply_lrp(model, input_tensor, img_np, pembroke_idx)
+        
+        # Generate LRP for Cardigan class
+        cardigan_lrp, _ = apply_lrp(model, input_tensor, img_np, cardigan_idx)
+        
+        # Handle single image case (no row dimension in axes)
+        if num_images == 1:
+            ax0, ax1, ax2 = axes
+        else:
+            ax0, ax1, ax2 = axes[i]
+        
+        # Display original image
+        ax0.imshow(img_np)
+        ax0.set_title(
+            f"Pred: {class_names[pred]} ({prob[0][pred.item()]:.2f})\n"
+            f"Pembroke: {pembroke_prob:.2f}, Cardigan: {cardigan_prob:.2f}"
+        )
+        ax0.axis("off")
+        
+        # Display LRP for Pembroke
+        ax1.imshow(pembroke_lrp)
+        ax1.set_title(f"LRP for Pembroke")
+        ax1.axis("off")
+        
+        # Display LRP for Cardigan
+        ax2.imshow(cardigan_lrp)
+        ax2.set_title(f"LRP for Cardigan")
+        ax2.axis("off")
+    
+    plt.tight_layout()
+    plt.savefig("lrp_class_comparison.png")
+    plt.show()
