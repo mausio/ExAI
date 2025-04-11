@@ -1,5 +1,14 @@
 #!./venv/bin/python
 
+######################################################
+# run with .venv/bin/python corgi_classifier.py
+# Path to specific images
+DEMO_MISCHLING = "./mischlinge/1.jpeg"
+DEMO_PEMBROKE = "./assets/corgi-pembroke.jpeg"
+######################################################
+
+
+
 import os
 import time
 import copy
@@ -21,11 +30,7 @@ from sklearn.metrics import confusion_matrix, classification_report
 
 from xai_methods import visualize_gradcam, visualize_lrp, compare_xai_methods, compare_gradcam_classes, compare_lrp_classes
 
-# Path to specific images
-DEMO_MISCHLING = "./assets/corgi-mischling.jpeg"
-# DEMO_MISCHLING = "./assets/corgi-mischling-2.jpeg"
 
-DEMO_PEMBROKE = "./assets/corgi-pembroke.jpeg"
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
