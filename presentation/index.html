@@ -244,55 +244,85 @@
             <h2>Grad-CAM: Technische Details</h2>
             <ul>
                 <li>Verwendet Gradienten der letzten Convolutional Layer</li>
+                <li>Target Layer: layer4 von ResNet50</li>
                 <li>Berechnet gewichtete Aktivierungskarten</li>
                 <li>Implementierung mit PyTorch Hooks für Forward/Backward Pass</li>
-                <li>Target Layer: layer4 von ResNet50</li>
             </ul>
         </section>
 
         <section>
             <h2>Code-Snippet: Grad-CAM</h2>
-            <h3>Teil 1: Forward Pass & Gradient-Berechnung</h3>
+            <h3>Teil 1: ➡️ & ⬅️ Pass Gradienten</h3>
             <pre><code class="language-python" style="font-size: 0.7em; max-height: 350px;">
 def __call__(self, input_tensor, target_class=None):
-    # Forward pass
     input_tensor = input_tensor.to(device)
+    # Reset gradients
     self.model.zero_grad()
     
-    # Forward pass through model
+    # => Forward pass 
     output = self.model(input_tensor)
-    
-    # Use predicted class if none specified
+
     if target_class is None:
+        # ..use predicted class..
         target_class = torch.argmax(output, dim=1).item()
-    
-    # One-hot encoding for target class
+
+    # One-hot encoding in sparse bitmap for target class
     one_hot = torch.zeros_like(output)
     one_hot[0, target_class] = 1
-    
-    # Backward pass to get gradients
+
+    # <= Backward pass to get gradients
     output.backward(gradient=one_hot, retain_graph=True)
+    # ..backward hooks are called here to store in gradients.
+
+    pooled_gradients = torch.mean(self.gradients, dim=[0, 2, 3])
+    # .. contains mean gradients and activations.
+
+    # Weight the activations by the gradients
+    for i in range(pooled_gradients.shape[0]):
+        self.activations[:, i, :, :] *= pooled_gradients[i]
+
+    avg_activations = torch.mean(self.activations, dim=1).squeeze()
+    # ..over the channel dimension.
+
+    # ReLU on the heatmap
+    heatmap = torch.maximum(avg_activations, torch.tensor(0.0).to(device))
+
+    # Normalize heatmap
+    if torch.max(heatmap) > 0:
+        heatmap = heatmap / torch.max(heatmap)
+
+    return heatmap.cpu().numpy()
             </code></pre>
         </section>
 
         <section>
             <h2>Code-Snippet: Grad-CAM</h2>
-            <h3>Teil 2: Aktivierungs-Gewichtung & Heatmap-Generierung</h3>
+            <h3>Teil 2: Aktive-Gewichte & Heatmap</h3>
             <pre><code class="language-python" style="font-size: 0.7em; max-height: 350px;">
-    # Weight the activations by gradients
-    pooled_gradients = torch.mean(self.gradients, dim=[0, 2, 3])
-    for i in range(pooled_gradients.shape[0]):
-        self.activations[:, i, :, :] *= pooled_gradients[i]
-    
-    # Average activations over channels
-    cam = torch.mean(self.activations, dim=1).squeeze()
-    
-    # Apply ReLU and normalize
-    cam = torch.maximum(cam, torch.tensor(0.0).to(device))
-    if torch.max(cam) > 0:
-        cam = cam / torch.max(cam)
-        
-    return cam.cpu().numpy()
+    # Get the target layer
+    target_layer = model.layer4
+
+    # Create GradCAM instance
+    grad_cam = GradCAM(model, target_layer)
+    cam = grad_cam(img_tensor, target_class)
+
+    cam_resized = cv2.resize(cam, (img_np.shape[1], img_np.shape[0]))
+    # ..to input image size
+
+    # Convert to heatmap
+    heatmap = cv2.applyColorMap(np.uint8(255 * cam_resized), cv2.COLORMAP_JET)
+    # ..and to RGB (from BGR)
+    heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
+
+    # Overlay heatmap on original image
+    alpha = 0.4
+    visualization = heatmap * alpha + img_np * (1 - alpha)
+    visualization = np.uint8(visualization)
+
+    # Remove hooks for possible reuse
+    grad_cam.remove_hooks()
+
+    return visualization, cam
             </code></pre>
         </section>
 
@@ -303,21 +333,11 @@ def __call__(self, input_tensor, target_class=None):
                 <img src="images/GradCAM-Beispiele.png" alt="Grad-CAM-Visual" style="width: 20%; margin-right: 20px; align-self: flex-start;" />
                     <ul style="font-size: 0.85em; align-self: flex-start;">
                         <li>Rote/gelbe Bereiche zeigen Hauptaufmerksamkeit des Modells</li>
-                        <li>Bei Pembroke: Aktivierung im Kopf- und Halsbereich, typisch für die kürzere Statur</li>
-                        <li>Bei Cardigan: Verstärkte Aktivierung im Schwanzbereich und größeren Ohren</li>
+                        <li>Bei Pembroke: Fokus auf Kopfform, Ohren und kurzen Schwanz</li>
+                        <li>Bei Cardigan: Fokus auf größere Ohren und längeren Schwanz</li>
                         <li>Unterschiedliche Färbungsmuster beeinflussen Entscheidungsfindung</li>
                     </ul>
-              </div>
-        </section>
-
-        <section>
-            <h2>Visualisierung: Grad-CAM</h2>
-            <ul>
-                <li>Hervorhebung entscheidungsrelevanter Bildregionen</li>
-                <li>Bei Pembroke: Fokus auf Kopfform, Ohren und kurzen Schwanz</li>
-                <li>Bei Cardigan: Fokus auf größere Ohren und längeren Schwanz</li>
-                <li>Nutzung des letzten Convolutional Layers (layer4 von ResNet50)</li>
-            </ul>
+            </div>
         </section>
 
         <section>
@@ -325,17 +345,15 @@ def __call__(self, input_tensor, target_class=None):
             <ul>
                 <li>Propagiert Vorhersagen rückwärts durch das Netzwerk</li>
                 <li>Berechnet Beiträge jedes Pixels zum finalen Output</li>
-                <li>Relevanz-Regeln: Epsilon-Regel für Stabilität</li>
-                <li>Implementierung für Conv2D, Linear und Pooling Layer</li>
             </ul>
         </section>
 
         <section>
             <h2>Code-Snippet: LRP</h2>
-            <h3>Teil 1: Vorbereitung & Forward Pass</h3>
+            <h3>Teil 1: Relevanz-Gradienten in ➡️&⬅️ Pass</h3>
             <pre><code class="language-python" style="font-size: 0.7em; max-height: 350px;">
 def __call__(self, input_tensor, target_class=None):
-    # Clone input tensor and enable gradient tracking
+    # Make a detached copy of the input
     input_copy = input_tensor.clone().detach().to(device)
     input_copy.requires_grad = True
     
@@ -343,27 +361,22 @@ def __call__(self, input_tensor, target_class=None):
     self.model.zero_grad()
     output = self.model(input_copy)
     
-    # Use predicted class if none specified
     if target_class is None:
+        # ..use predicted class
         target_class = torch.argmax(output, dim=1).item()
     
-    # Create one-hot encoding for target class
     one_hot = torch.zeros_like(output)
     one_hot[0, target_class] = 1.0
     
     # Backward pass to get gradients
     output.backward(gradient=one_hot)
-            </code></pre>
-        </section>
-
-        <section>
-            <h2>Code-Snippet: LRP</h2>
-            <h3>Teil 2: Relevanz-Berechnung & Normalisierung</h3>
-            <pre><code class="language-python" style="font-size: 0.7em; max-height: 350px;">
-    # Get gradients with respect to input
+    
+    # Get the gradient with respect to the input
+    # This represents how much each input pixel affects the output
     grad = input_copy.grad.clone()
     
-    # Calculate relevance as element-wise product
+    # Element-wise product of input and gradient
+    # This gives us a relevance map highlighting important features
     relevance = (input_copy * grad).sum(dim=1).squeeze()
     
     # Take absolute value and normalize
@@ -372,6 +385,41 @@ def __call__(self, input_tensor, target_class=None):
         relevance = relevance / torch.max(relevance)
     
     return relevance.detach().cpu().numpy()
+            </code></pre>
+        </section>
+
+        <section>
+            <h2>Code-Snippet: LRP</h2>
+            <h3>Teil 2: Normalisierte Relevanz-Heatmap</h3>
+            <pre><code class="language-python" style="font-size: 0.7em; max-height: 350px;">
+# Create LRP instance
+lrp = LRP(model)
+
+try:
+    # Generate relevance map
+    relevance_map = lrp(img_tensor, target_class)
+    
+    if relevance_map is None:
+        # Return a blank heatmap if LRP fails
+        relevance_map = np.zeros((img_np.shape[0], img_np.shape[1]))
+        visualization = img_np.copy()
+        return visualization, relevance_map
+    
+    # Resize relevance map to input image size
+    relevance_resized = cv2.resize(relevance_map, (img_np.shape[1], img_np.shape[0]))
+    
+    # Convert to heatmap
+    heatmap = cv2.applyColorMap(np.uint8(255 * relevance_resized), cv2.COLORMAP_JET)
+    
+    # Convert to RGB (from BGR)
+    heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
+    
+    # Overlay heatmap on original numpy array (image)
+    alpha = 0.4
+    visualization = heatmap * alpha + img_np * (1 - alpha)
+    visualization = np.uint8(visualization)
+    
+    return visualization, relevance_map
             </code></pre>
         </section>
 
@@ -392,7 +440,6 @@ def __call__(self, input_tensor, target_class=None):
                 <li>Subjektivität in der Interpretation der Visualisierungen</li>
                 <li>GradCAM: Fokus auf letzte Layer könnte wichtige frühe Features übersehen</li>
                 <li>LRP: Höhere Komplexität erschwert intuitive Interpretation</li>
-                <li>Beide Methoden benötigen Expertenwissen zur vollständigen Ausschöpfung</li>
                 <li>Balance zwischen Erklärbarkeit und technischer Tiefe ist herausfordernd</li>
             </ul>
         </section>

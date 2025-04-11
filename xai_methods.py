@@ -24,16 +24,15 @@ class GradCAM:
 
     def register_hooks(self):
         def forward_hook(module, input, output):
+            # Store the activations of target layer during forward pass
             self.activations = output.detach()
 
         def backward_hook(module, grad_input, grad_output):
+            # Store the gradients of target layer during backward pass
             self.gradients = grad_output[0].detach()
 
-        # Register the hooks
         forward_handle = self.target_layer.register_forward_hook(forward_hook)
         backward_handle = self.target_layer.register_full_backward_hook(backward_hook)
-
-        # Store the handles for removal later
         self.hooks = [forward_handle, backward_handle]
 
     def remove_hooks(self):
@@ -41,47 +40,43 @@ class GradCAM:
             hook.remove()
 
     def __call__(self, input_tensor, target_class=None):
-        # Forward pass
         input_tensor = input_tensor.to(device)
-
-        # Zero gradients
+        # Reset gradients
         self.model.zero_grad()
 
-        # Forward pass
+        # => Forward pass 
         output = self.model(input_tensor)
 
-        # If target_class is None, use predicted class
         if target_class is None:
+            # ..use predicted class..
             target_class = torch.argmax(output, dim=1).item()
 
-        # One-hot encoding of the target class
+        # One-hot encoding in sparse bitmap for target class
         one_hot = torch.zeros_like(output)
         one_hot[0, target_class] = 1
 
-        # Backward pass to get gradients
+        # <= Backward pass to get gradients
         output.backward(gradient=one_hot, retain_graph=True)
-
-        # Get mean gradients and activations
+        # ..backward hooks are called here to store in gradients.
+        
         pooled_gradients = torch.mean(self.gradients, dim=[0, 2, 3])
+        # .. contains mean gradients and activations.
 
         # Weight the activations by the gradients
         for i in range(pooled_gradients.shape[0]):
             self.activations[:, i, :, :] *= pooled_gradients[i]
 
-        # Average activations over the channel dimension
-        cam = torch.mean(self.activations, dim=1).squeeze()
+        avg_activations = torch.mean(self.activations, dim=1).squeeze()
+        # ..over the channel dimension.
 
         # ReLU on the heatmap
-        cam = torch.maximum(cam, torch.tensor(0.0).to(device))
+        heatmap = torch.maximum(avg_activations, torch.tensor(0.0).to(device))
 
-        # Normalize the heatmap
-        if torch.max(cam) > 0:
-            cam = cam / torch.max(cam)
+        # Normalize heatmap
+        if torch.max(heatmap) > 0:
+            heatmap = heatmap / torch.max(heatmap)
 
-        # Resize to the input image size
-        cam = cam.cpu().numpy()
-
-        return cam
+        return heatmap.cpu().numpy()
 
 
 def apply_gradcam(model, img_tensor, img_np, target_class=None, layer_name="layer4"):
@@ -90,17 +85,14 @@ def apply_gradcam(model, img_tensor, img_np, target_class=None, layer_name="laye
 
     # Create GradCAM instance
     grad_cam = GradCAM(model, target_layer)
-
-    # Generate heatmap
     cam = grad_cam(img_tensor, target_class)
 
-    # Resize CAM to input image size
     cam_resized = cv2.resize(cam, (img_np.shape[1], img_np.shape[0]))
+    # ..to input image size
 
     # Convert to heatmap
     heatmap = cv2.applyColorMap(np.uint8(255 * cam_resized), cv2.COLORMAP_JET)
-
-    # Convert to RGB (from BGR)
+    # ..and to RGB (from BGR)
     heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
 
     # Overlay heatmap on original image
@@ -108,7 +100,7 @@ def apply_gradcam(model, img_tensor, img_np, target_class=None, layer_name="laye
     visualization = heatmap * alpha + img_np * (1 - alpha)
     visualization = np.uint8(visualization)
 
-    # Remove hooks
+    # Remove hooks for possible reuse
     grad_cam.remove_hooks()
 
     return visualization, cam
@@ -159,12 +151,12 @@ def visualize_gradcam(model, dataloader, class_names, num_images=5):
 
         # Display GradCAM for true class
         axes[i, 1].imshow(true_cam)
-        axes[i, 1].set_title(f"GradCAM for {class_names[label]}")
+        axes[i, 1].set_title(f"GradCAM for true {class_names[label]}")
         axes[i, 1].axis("off")
 
         # Display GradCAM for predicted class
         axes[i, 2].imshow(pred_cam)
-        axes[i, 2].set_title(f"GradCAM for {class_names[pred]}")
+        axes[i, 2].set_title(f"GradCAM for predicted {class_names[pred]}")
         axes[i, 2].axis("off")
 
     plt.tight_layout()
@@ -179,7 +171,7 @@ class LRP:
         self.model.eval()
     
     def __call__(self, input_tensor, target_class=None):
-        # Make a detached copy of the input that requires gradient
+        # Make a detached copy of the input
         input_copy = input_tensor.clone().detach().to(device)
         input_copy.requires_grad = True
         
@@ -187,11 +179,10 @@ class LRP:
         self.model.zero_grad()
         output = self.model(input_copy)
         
-        # If target_class is None, use predicted class
         if target_class is None:
+            # ..use predicted class
             target_class = torch.argmax(output, dim=1).item()
         
-        # One-hot encoding for the target class
         one_hot = torch.zeros_like(output)
         one_hot[0, target_class] = 1.0
         
@@ -236,7 +227,7 @@ def apply_lrp(model, img_tensor, img_np, target_class=None):
         # Convert to RGB (from BGR)
         heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
         
-        # Overlay heatmap on original image
+        # Overlay heatmap on original numpy array (image)
         alpha = 0.4
         visualization = heatmap * alpha + img_np * (1 - alpha)
         visualization = np.uint8(visualization)
@@ -296,12 +287,12 @@ def visualize_lrp(model, dataloader, class_names, num_images=5):
 
         # Display LRP for true class
         axes[i, 1].imshow(true_lrp)
-        axes[i, 1].set_title(f"LRP for {class_names[label]}")
+        axes[i, 1].set_title(f"LRP for true {class_names[label]}")
         axes[i, 1].axis("off")
 
         # Display LRP for predicted class
         axes[i, 2].imshow(pred_lrp)
-        axes[i, 2].set_title(f"LRP for {class_names[pred]}")
+        axes[i, 2].set_title(f"LRP for predicted {class_names[pred]}")
         axes[i, 2].axis("off")
 
     plt.tight_layout()
@@ -398,8 +389,7 @@ def compare_xai_methods(model, dataloader, class_names, num_images=3):
     print("    which visual traits the model is using to distinguish between classes.")
 
 def compare_gradcam_classes(model, dataloader, class_names, num_images=1):
-    # Set model to evaluation mode
-    model.eval()
+    model.eval()  # Set model to evaluation mode
     
     # Get a batch of images
     images, labels = next(iter(dataloader))
