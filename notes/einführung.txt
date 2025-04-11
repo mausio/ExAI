@@ -1,0 +1,29 @@
+1. CNNs sind ideal für Bildverarbeitung, weil sie durch Faltungsschichten lokal zusammenhängende Muster erkennen können. Sie extrahieren automatisch hierarchische Features - von einfachen Kanten in frühen Schichten bis zu komplexen Objektteilen in späteren Schichten. Diese Architektur simuliert effektiv die visuelle Verarbeitung im menschlichen Gehirn.
+
+2. ResNet50 verwendet "Residual Connections" (Shortcuts), die das Training sehr tiefer Netze ermöglichen, indem sie das Vanishing-Gradient-Problem lösen. Es wurde bereits auf ImageNet (über 1 Million Bilder) trainiert und hat generische visuelle Features gelernt, die sich gut auf neue Aufgaben übertragen lassen.
+
+3. Die 50 Schichten bestehen aus Faltungsschichten, Batch-Normalisierung, ReLU-Aktivierungen und den typischen Residual-Blöcken. Diese tiefe Architektur erlaubt dem Netzwerk, komplexe hierarchische Merkmale zu erlernen - von einfachen Texturen bis zu komplexen Objektteilen.
+
+4. Learning Rate 0.001 ist die Schrittgröße, mit der das Modell Parameter aktualisiert - kleine Werte sorgen für stabile Konvergenz. Batch Size 32 bedeutet, dass 32 Bilder gleichzeitig verarbeitet werden, was ein guter Kompromiss zwischen Speicherverbrauch und Trainingsgeschwindigkeit ist.
+
+5. ReLU (Rectified Linear Unit) ist eine Aktivierungsfunktion f(x)=max(0,x), die nicht-Linearität ins Netzwerk bringt. Sie verhindert das Vanishing-Gradient-Problem und ist recheneffizient.
+
+6. Adam kombiniert Momentum (Beschleunigung in konsistenten Richtungen) mit adaptiven Lernraten für jeden Parameter. Er konvergiert schneller als einfacher Gradientenabstieg und benötigt weniger manuelle Anpassung.
+
+7. Bei Transfer Learning nutzen wir frühe Schichten (allgemeine Features wie Kanten, Texturen) eines vortrainierten Modells und trainieren nur die späten Schichten neu# für unsere spezifische Aufgabe. Dadurch sparen wir Rechenzeit und benötigen weniger Trainingsdaten.
+
+8. Eine Epoche bedeutet ein kompletter Durchlauf durch den Trainingsdatensatz. 10 Epochen beim Fine-Tuning bedeuten, dass das Modell die Daten 10 Mal gesehen hat - ausreichend für Anpassung ohne Überanpassung.
+
+9. Über 90% der Bilder im separaten Validierungsdatensatz wurden korrekt klassifiziert, was zeigt, dass das Modell gut generalisiert und nicht nur Trainingsdaten auswendig lernt.
+
+10. Layer4 ist die letzte Hauptschichtengruppe in ResNet50. Durch Fine-Tuning nur dieser Schicht passen wir die abstrakteren Merkmale an unsere spezifische Aufgabe an, während grundlegende Feature-Erkennung erhalten bleibt.
+
+11. Early Stopping beendet das Training, wenn sich die Validierungsmetrik über mehrere Epochen nicht verbessert (patience=5). Dies verhindert, dass das Modell die Trainingsdaten "auswendig lernt".
+
+12. ReduceLROnPlateau reduziert die Lernrate automatisch, wenn keine Verbesserung mehr stattfindet. So können wir anfangs große Trainingsschritte machen und später feinere Anpassungen vornehmen.
+
+13. In der Konfusionsmatrix sehen wir 38 korrekt klassifizierte Pembroke-Corgis und 24 korrekt klassifizierte Cardigan-Corgis. Die Diagonale einer Konfusionsmatrix zeigt immer korrekte Vorhersagen.
+
+14. Nur 6 Fehlklassifikationen insgesamt bestätigen die hohe Genauigkeit von >90%. Das Modell hat die Unterschiede zwischen den Rassen gut gelernt.
+
+15. Die meisten Fehler traten auf, wenn Cardigan-Corgis als Pembrokes klassifiziert wurden. Dies könnte darauf hindeuten, dass Pembroke-Features dominanter sind oder der Datensatz mehr Pembroke-Bilder enthielt.
