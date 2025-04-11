@@ -3,7 +3,7 @@
 ######################################################
 # run with .venv/bin/python corgi_classifier.py
 # Path to specific images
-DEMO_MISCHLING = "./mischlinge/1.jpeg"
+DEMO_MISCHLING = "./mischlinge/2.jpeg"
 DEMO_PEMBROKE = "./assets/corgi-pembroke.jpeg"
 ######################################################
 
